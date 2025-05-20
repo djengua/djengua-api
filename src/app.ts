@@ -15,6 +15,16 @@ import userRoutes from './routes/users.routes';
 
 const app: Application = express();
 
+const corsOptions = {
+  origin: ["http://localhost:3000"],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true, // Permite cookies y autenticación
+  maxAge: 86400 // Tiempo en segundos que los resultados de preflight pueden ser cacheados (1 día)
+};
+
+app.use(cors(corsOptions));
+
 // Middlewares
 app.use(express.json());
 app.use(cors());

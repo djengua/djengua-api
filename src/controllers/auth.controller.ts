@@ -13,7 +13,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  const { name, last_name, email, password } = req.body;
+  const { name, lastName, email, password } = req.body;
 
   try {
     // Verificar si el usuario ya existe
@@ -30,7 +30,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // Crear usuario
     const user = await User.create({
       name,
-      last_name,
+      lastName,
       email,
       password
     });

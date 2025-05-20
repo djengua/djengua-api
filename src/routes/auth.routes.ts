@@ -10,7 +10,7 @@ router.post(
   '/register',
   [
     check('name', 'El nombre es obligatorio').not().isEmpty(),
-    check('last_name', 'El apellido es obligatorio').not().isEmpty(),
+    check('lastName', 'El apellido es obligatorio').not().isEmpty(),
     check('email', 'Incluir un email válido').isEmail(),
     check('password', 'La contraseña debe tener al menos 6 caracteres').isLength({ min: 6 })
   ],
