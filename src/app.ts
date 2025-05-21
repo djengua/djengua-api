@@ -23,7 +23,6 @@ const corsOptions = {
   maxAge: 86400 // Tiempo en segundos que los resultados de preflight pueden ser cacheados (1 día)
 };
 
-
 // Middlewares
 app.use(express.json());
 app.use(cors(corsOptions));
