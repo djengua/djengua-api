@@ -16,7 +16,7 @@ import userRoutes from './routes/users.routes';
 const app: Application = express();
 
 const corsOptions = {
-  origin: ["http://localhost", "http://localhost:3000", "http://djengua-api-production.up.railway.app"],
+  origin: ["http://localhost", "http://localhost:3000", "https://djengua.com"],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true, // Permite cookies y autenticación
