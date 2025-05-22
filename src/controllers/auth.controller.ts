@@ -1,7 +1,7 @@
 // src/controllers/auth.controller.ts
-import { Request, Response } from 'express';
-import { validationResult } from 'express-validator';
-import User, { IUser } from '../models/user';
+import { Request, Response } from "express";
+import { validationResult } from "express-validator";
+import User, { IUser } from "../models/user";
 
 // @desc    Registrar usuario
 // @route   POST /api/auth/register
@@ -22,7 +22,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     if (userExists) {
       res.status(400).json({
         success: false,
-        message: 'El usuario ya existe'
+        message: "El usuario ya existe",
       });
       return;
     }
@@ -32,7 +32,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       name,
       lastName,
       email,
-      password
+      password,
     });
 
     // Crear token
@@ -40,18 +40,18 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     res.status(201).json({
       success: true,
-      token
+      token,
     });
   } catch (error) {
     if (error instanceof Error) {
       res.status(500).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     } else {
       res.status(500).json({
         success: false,
-        message: 'Error al registrar usuario'
+        message: "Error al registrar usuario",
       });
     }
   }
@@ -71,12 +71,22 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
   try {
     // Verificar por email y seleccionar la contraseña
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({
+      email: email.toString().toLowerCase(),
+    }).select("+password + isActive");
 
     if (!user) {
       res.status(401).json({
         success: false,
-        message: 'Credenciales inválidas'
+        message: "Credenciales inválidas",
+      });
+      return;
+    }
+
+    if (!user.isActive) {
+      res.status(403).json({
+        success: false,
+        message: "Usuario inactivo, contacte con el administrador",
       });
       return;
     }
@@ -87,7 +97,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     if (!isMatch) {
       res.status(401).json({
         success: false,
-        message: 'Credenciales inválidas'
+        message: "Credenciales inválidas",
       });
       return;
     }
@@ -96,7 +106,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     if (!user.isActive) {
       res.status(401).json({
         success: false,
-        message: 'Usuario inactivo. Contacte al administrador'
+        message: "Usuario inactivo. Contacte al administrador",
       });
       return;
     }
@@ -106,18 +116,18 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     res.status(200).json({
       success: true,
-      token
+      token,
     });
   } catch (error) {
     if (error instanceof Error) {
       res.status(500).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     } else {
       res.status(500).json({
         success: false,
-        message: 'Error al iniciar sesión'
+        message: "Error al iniciar sesión",
       });
     }
   }
@@ -132,18 +142,18 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
 
     res.status(200).json({
       success: true,
-      data: user
+      data: user,
     });
   } catch (error) {
     if (error instanceof Error) {
       res.status(500).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     } else {
       res.status(500).json({
         success: false,
-        message: 'Error al obtener información del usuario'
+        message: "Error al obtener información del usuario",
       });
     }
   }
