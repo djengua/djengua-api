@@ -1,8 +1,8 @@
 // src/routes/users.routes.ts
 import express from 'express';
 import { check } from 'express-validator';
-import { getUsers, getUserById, updateUser, deleteUser } from '../controllers/users.controller';
-import { protect, authorize } from '../middlewares/auth';
+import { getUsers, getUserById, updateUser, deleteUser, changeActiveCompany, fetchMe } from '../controllers/users.controller';
+import { protect } from '../middlewares/auth';
 
 const router = express.Router();
 
@@ -13,6 +13,9 @@ router.use(protect);
 router.route('/')
   .get(getUsers);
 
+router.route('/me')
+  .get(fetchMe);
+
 router.route('/:id')
   .get(getUserById)
   .put([
@@ -21,5 +24,10 @@ router.route('/:id')
     // check('isActive', 'Rol inválido').optional().isIn(['user', 'admin'])
   ], updateUser)
   .delete(deleteUser);
+
+router.route('/:id/change-company')
+  .patch([
+    check('id', 'Indique la compañia activa').not().isEmpty(),
+  ], changeActiveCompany);
 
 export default router;

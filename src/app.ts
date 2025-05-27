@@ -17,7 +17,7 @@ import companiesRoutes from "./routes/companies.routes";
 const app: Application = express();
 
 const corsOptions = {
-  origin: ["http://localhost", "http://localhost:3000", "https://djengua.com"],
+  origin: ["http://localhost", "http://localhost:3000", "http://localhost:3001", "https://djengua.com"],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true, // Permite cookies y autenticación

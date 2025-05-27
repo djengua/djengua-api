@@ -12,6 +12,7 @@ export interface IUser extends Document {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  activeCompany: mongoose.Types.ObjectId;
   matchPassword(enteredPassword: string): Promise<boolean>;
   getSignedJwtToken(): string;
 }
@@ -53,10 +54,30 @@ const UserSchema: Schema = new Schema(
     isActive: {
       type: Boolean,
       default: true
-    }
+    },
+    activeCompany: {
+      type: Schema.Types.ObjectId,
+      ref: "Company"
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
+    toJSON: { 
+      transform: function(doc, ret) {
+        ret.id = ret._id;
+        delete ret._id;
+        delete ret.__v;
+        return ret;
+      }
+    },
+    toObject: { 
+      transform: function(doc, ret) {
+        ret.id = ret._id;
+        delete ret._id;
+        delete ret.__v;
+        return ret;
+      }
+    }
   }
 );
 
@@ -77,7 +98,9 @@ UserSchema.methods.matchPassword = async function(enteredPassword: string): Prom
 
 // Utilizar la función auxiliar para generar el token
 UserSchema.methods.getSignedJwtToken = function(): string {
-  return generateToken(this._id.toString());
+  console.log(this);
+  console.log(this.id.toString(), this.role.toString(), this.activeCompany.toString(), this.email.toString());
+  return generateToken(this.id.toString(), this.role.toString(), this.activeCompany.toString(), this.email.toString());
 };
 
 export default mongoose.model<IUser>('User', UserSchema);
