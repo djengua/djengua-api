@@ -1,42 +1,36 @@
-// src/controllers/companies.controller.ts
+// src/controllers/products.controller.ts
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
-import Company, { ICompany } from "../models/company";
+import Product, { IProduct } from "../models/products";
+import User  from "../models/user";
 
-// @desc    Obtener todas los companies
-// @route   GET /api/companies
+// @desc    Obtener todas los products
+// @route   GET /api/products
 // @access  Private/Admin
-export const getCompanies = async (
+export const getProducts = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
+
     let filter = {};
 
     // Si no es admin, solo mostrar sus propias compañías
-    if (!["admin", "superadmin"].includes(req.user!.role) ) {
-      console.log('es usuario');
-      filter = { createdBy: req.user!.id };
+    if (req.user!.role !== "admin") {
+        // consulta al momento de la compañia activa
+        const user = await User.findById(req.user!.id)
+            .select("+activeCompany");
+        filter = { companyId: user!.activeCompany };
     }
 
-    const companies = await Company.find(filter)
-      .populate("createdBy", "name lastName email")
+    const products = await Product.find(filter)
+      .populate("createdBy", "name description isActive createdAt companyId ")
       .sort({ createdAt: -1 });
-
-    // const companies = data.map((company: ICompany) => ({
-    //   id: company._id,
-    //   name: company.name,
-    //   description: company.description,
-    //   createdBy: company.createdBy,
-    //   isActive: company.isActive,
-    //   createdAt: company.createdAt,
-    //   updatedAt: company.updatedAt,
-    // }));
 
     res.status(200).json({
       success: true,
-      count: companies.length,
-      data: companies,
+      count: products.length,
+      data: products,
     });
   } catch (error) {
     if (error instanceof Error) {
@@ -47,46 +41,37 @@ export const getCompanies = async (
     } else {
       res.status(500).json({
         success: false,
-        message: "Error al obtener compañias",
+        message: "Error al obtener los productos",
       });
     }
   }
 };
 
-// @desc    Obtener un compania por ID
-// @route   GET /api/companies/:id
+// @desc    Obtener un producto por ID
+// @route   GET /api/products/:id
 // @access  Private/Admin
-export const getCompanyById = async (
+export const getProductById = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
-    const company = await Company.findById(req.params.id).populate(
-      "createdBy",
-      "name description isActive createdAt createdBy"
-    );
+    const product = await Product.findById(req.params.id)
+        .populate(
+            "createdBy",
+            "name lastName"
+        );
 
-    if (!company) {
+    if (!product) {
       res.status(404).json({
         success: false,
-        message: "Compañia no encontrada",
+        message: "Producto no encontrado",
       });
       return;
     }
 
-    // const mappedCompany = {
-    //   id: company._id,
-    //   name: company.name,
-    //   description: company.description,
-    //   isActive: company.isActive,
-    //   createdBy: company.createdBy,
-    //   createdAt: company.createdAt,
-    //   updatedAt: company.updatedAt,
-    // };
-
     res.status(200).json({
       success: true,
-      data: company,
+      data: product,
     });
   } catch (error) {
     if (error instanceof Error) {
@@ -97,16 +82,16 @@ export const getCompanyById = async (
     } else {
       res.status(500).json({
         success: false,
-        message: "Error al obtener compania",
+        message: "Error al obtener el producto",
       });
     }
   }
 };
 
-// @desc    Crear compania
-// @route   POST /api/companies
+// @desc    Crear producto
+// @route   POST /api/products
 // @access  Private/Admin
-export const newCompany = async (
+export const newProduct = async (
   req: Request,
   res: Response
 ): Promise<void> => {
@@ -122,37 +107,37 @@ export const newCompany = async (
   try {
     const { name, description, isActive } = req.body;
 
-    // Verificar si ya existe una compañía con el mismo nombre (case insensitive)
-    const existingCompany = await Company.findOne({
-      name: new RegExp(`^${name.trim()}$`, "i"),
-      createdBy: req.user!.id
-    });
+    // // Verificar si ya existe un producto con el mismo nombre (case insensitive)
+    // const existingProduct = await Product.findOne({
+    //   name: new RegExp(`^${name.trim()}$`, "i"),
+    // });
 
-    if (existingCompany) {
-      res.status(409).json({
-        success: false,
-        message: "Ya existe una compañía con ese nombre",
-      });
-      return;
-    }
+    // if (existingProduct) {
+    //   res.status(409).json({
+    //     success: false,
+    //     message: "Ya existe un producto con ese nombre",
+    //   });
+    //   return;
+    // }
 
     // Crear nueva compañía
-    const newCompany = await Company.create({
+    const newProduct = await Product.create({
       name: name.trim(),
       description: description?.trim() ?? "",
       isActive: isActive ?? true,
       createdBy: req.user!.id,
+      companyId: req.user!.activeCompany,
     });
 
-    await newCompany.populate("createdBy", "name lastName email");
+    await newProduct.populate("createdBy", "name description isActive createdAt");
 
     res.status(201).json({
       success: true,
-      message: "Compañía creada exitosamente",
-      data: newCompany,
+      message: "Producto creado exitosamente",
+      data: newProduct,
     });
   } catch (error) {
-    console.error("Error creating company:", error);
+    console.error("Error creating product:", error);
 
     if (error instanceof Error) {
       // Error de validación de Mongoose
@@ -176,7 +161,7 @@ export const newCompany = async (
       if ((error as any).code === 11000) {
         res.status(409).json({
           success: false,
-          message: "Ya existe una compañía con ese nombre",
+          message: "Ya existe un producto con ese nombre",
         });
         return;
       }
@@ -184,15 +169,15 @@ export const newCompany = async (
 
     res.status(500).json({
       success: false,
-      message: "Error interno del servidor al crear la compañía",
+      message: "Error interno del servidor al crear el producto",
     });
   }
 };
 
-// @desc    Actualizar compania
-// @route   PUT /api/companies/:id
+// @desc    Actualizar producto
+// @route   PUT /api/products/:id
 // @access  Private/Admin
-export const updateCompany = async (
+export const updateProduct = async (
   req: Request,
   res: Response
 ): Promise<void> => {
@@ -203,25 +188,25 @@ export const updateCompany = async (
   }
 
   try {
-    const company = await Company.findById(req.params.id);
+    const product = await Product.findById(req.params.id);
 
-    if (!company) {
+    if (!product) {
       res.status(404).json({
         success: false,
-        message: "Compañia no encontrada",
+        message: "Producto no encontrado",
       });
       return;
     }
 
     // Campos actualizables
     const fieldsToUpdate = {
-      name: req.body.name || company.name,
-      description: req.body.description || company.description,
+      name: req.body.name || product.name,
+      description: req.body.description || product.description,
       isActive:
-        req.body.isActive !== undefined ? req.body.isActive : company.isActive,
+        req.body.isActive !== undefined ? req.body.isActive : product.isActive,
     };
 
-    const updatedCompany = await Company.findByIdAndUpdate(
+    const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
       fieldsToUpdate,
       { new: true, runValidators: true }
@@ -229,7 +214,7 @@ export const updateCompany = async (
 
     res.status(200).json({
       success: true,
-      data: updatedCompany,
+      data: updatedProduct,
     });
   } catch (error) {
     if (error instanceof Error) {
@@ -240,36 +225,36 @@ export const updateCompany = async (
     } else {
       res.status(500).json({
         success: false,
-        message: "Error al actualizar compañia",
+        message: "Error al actualizar producto",
       });
     }
   }
 };
 
-// @desc    Eliminar compañia
-// @route   DELETE /api/companies/:id
+// @desc    Eliminar producto
+// @route   DELETE /api/products/:id
 // @access  Private/Admin
-export const deleteCompany = async (
+export const deleteProduct = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
-    const company = await Company.findById(req.params.id);
+    const product = await Product.findById(req.params.id);
 
-    if (!company) {
+    if (!product) {
       res.status(404).json({
         success: false,
-        message: "Compañia no encontrado",
+        message: "Producto no encontrado",
       });
       return;
     }
 
-    // await Company.findByIdAndDelete(req.params.id);
+    // await Product.findByIdAndDelete(req.params.id);
 
-    await Company.findByIdAndUpdate(
-      req.params.id,
-      { isActive: false },
-      // { runValidators: true }
+    await Product.findByIdAndUpdate(
+        req.params.id,
+        { isActive: false },
+        // { runValidators: true }
     );
 
     res.status(200).json({
@@ -285,7 +270,7 @@ export const deleteCompany = async (
     } else {
       res.status(500).json({
         success: false,
-        message: "Error al eliminar compañia",
+        message: "Error al eliminar producto",
       });
     }
   }

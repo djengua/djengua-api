@@ -71,11 +71,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
   try {
     // Verificar por email y seleccionar la contraseña
-    console.log(email);
     const user = await User.findOne({
       email: email.toString().toLowerCase(),
     }).select("+password +role +isActive +email +activeCompany");
-    console.log(1);
+
     if (!user) {
       res.status(401).json({
         success: false,
@@ -83,7 +82,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       });
       return;
     }
-    console.log(2);
+
     if (!user.isActive) {
       res.status(403).json({
         success: false,
@@ -91,7 +90,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       });
       return;
     }
-    console.log(3);
 
     // Verificar si la contraseña coincide
     const isMatch = await user.matchPassword(password);
@@ -112,10 +110,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       });
       return;
     }
-    console.log(4);
+
     // Crear token
     const token = user.getSignedJwtToken();
-    console.log(5);
+
     res.status(200).json({
       success: true,
       token,
@@ -135,28 +133,3 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-// @desc    Obtener usuario actual
-// @route   GET /api/auth/me
-// @access  Private
-export const getMe = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const user = await User.findById(req.user!.id);
-
-    res.status(200).json({
-      success: true,
-      data: user,
-    });
-  } catch (error) {
-    if (error instanceof Error) {
-      res.status(500).json({
-        success: false,
-        message: error.message,
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: "Error al obtener información del usuario",
-      });
-    }
-  }
-};

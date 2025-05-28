@@ -12,7 +12,7 @@ interface JwtPayload {
  * @param id ID del usuario
  * @returns Token JWT firmado
  */
-export const generateToken = (id: string, role: string, activeCompany: string, email: string): string => {
+export const generateToken = (id: string, role: string, email: string): string => {
   // Verificar que existe el secreto JWT
   const secret = process.env.JWT_SECRET;
   if (!secret) {
@@ -25,8 +25,7 @@ export const generateToken = (id: string, role: string, activeCompany: string, e
   try {
     // Utilizar cast explícito para el secreto
     // @ts-ignore - Ignorar errores de tipo para esta línea específica
-    console.log(id, role, activeCompany, email);
-    return jwt.sign({ id, role, activeCompany, email }, secret, { expiresIn });
+    return jwt.sign({ id, role, email }, secret, { expiresIn });
   } catch (error) {
     console.error('Error al generar JWT:', error);
     throw new Error('No se pudo generar el token JWT');

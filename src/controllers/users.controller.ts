@@ -224,6 +224,9 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
+// @desc    Cambia compañia activa
+// @route   DELETE /api/companies/:id/change-company
+// @access  Private
 export const changeActiveCompany = async (req: Request, res: Response): Promise<void> => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

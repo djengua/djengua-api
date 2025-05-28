@@ -1,7 +1,7 @@
 // src/routes/auth.routes.ts
 import express from 'express';
 import { check } from 'express-validator';
-import { register, login, getMe } from '../controllers/auth.controller';
+import { register, login } from '../controllers/auth.controller';
 import { protect } from '../middlewares/auth';
 
 const router = express.Router();
@@ -26,6 +26,6 @@ router.post(
   login
 );
 
-router.get('/me', protect, getMe);
+// router.get('/me', protect, getMe);
 
 export default router;

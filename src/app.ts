@@ -13,6 +13,7 @@ dotenv.config();
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/users.routes";
 import companiesRoutes from "./routes/companies.routes";
+import productsRoutes from "./routes/products.routes";
 
 const app: Application = express();
 
@@ -38,6 +39,7 @@ if (process.env.NODE_ENV === "development") {
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/companies", companiesRoutes);
+app.use("/api/products", productsRoutes);
 
 // Ruta de inicio
 app.get("/", (req: Request, res: Response) => {
