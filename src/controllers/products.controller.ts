@@ -105,20 +105,7 @@ export const newProduct = async (
   }
 
   try {
-    const { name, description, isActive } = req.body;
-
-    // // Verificar si ya existe un producto con el mismo nombre (case insensitive)
-    // const existingProduct = await Product.findOne({
-    //   name: new RegExp(`^${name.trim()}$`, "i"),
-    // });
-
-    // if (existingProduct) {
-    //   res.status(409).json({
-    //     success: false,
-    //     message: "Ya existe un producto con ese nombre",
-    //   });
-    //   return;
-    // }
+    const { name, description, isActive, quantity, price, published, includeTax } = req.body;
 
     // Crear nueva compañía
     const newProduct = await Product.create({
@@ -127,9 +114,30 @@ export const newProduct = async (
       isActive: isActive ?? true,
       createdBy: req.user!.id,
       companyId: req.user!.activeCompany,
+      // images?: string[];
+      quantity: quantity,
+      price: price,
+      // cost?: number;
+      // sku?: string;
+      // size?: string;
+      // color?: string;
+      published: published,
+      includeTax: includeTax ?? false,
+      // tax?: number;
     });
 
-    await newProduct.populate("createdBy", "name description isActive createdAt");
+    // images?: string[];
+    // quantity: number;
+    // price: number;
+    // cost?: number;
+    // sku?: string;
+    // size?: string;
+    // color?: string;
+    // published: boolean;
+    // includeTax: boolean;
+    // tax?: number;
+
+    await newProduct.populate("createdBy", "name description isActive createdAt quantity price published includeTax");
 
     res.status(201).json({
       success: true,
