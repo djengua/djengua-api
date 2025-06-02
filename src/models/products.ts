@@ -9,6 +9,7 @@ export interface IProduct extends Document {
   createdAt: Date;
   updatedAt: Date;
   companyId: mongoose.Types.ObjectId;
+  categoryId?: mongoose.Types.ObjectId;
   
   images?: string[];
   quantity: number;
@@ -48,6 +49,10 @@ const ProductSchema: Schema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Company",
       required: [true, "La compañia es requerida"],
+    },
+    categoryId: {
+      type: Schema.Types.ObjectId,
+      ref: "Category",
     },
     images: [
       {

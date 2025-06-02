@@ -14,6 +14,7 @@ import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/users.routes";
 import companiesRoutes from "./routes/companies.routes";
 import productsRoutes from "./routes/products.routes";
+import categoriesRoutes from "./routes/categories.routes";
 
 const app: Application = express();
 
@@ -40,6 +41,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/companies", companiesRoutes);
 app.use("/api/products", productsRoutes);
+app.use("/api/categories", categoriesRoutes);
 
 // Ruta de inicio
 app.get("/", (req: Request, res: Response) => {

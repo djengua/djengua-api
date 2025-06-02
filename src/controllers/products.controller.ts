@@ -25,6 +25,8 @@ export const getProducts = async (
 
     const products = await Product.find(filter)
       .populate("createdBy", "name description isActive createdAt companyId ")
+      .populate("companyId", "name description")
+      .populate("categoryId", "name description")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -59,7 +61,8 @@ export const getProductById = async (
         .populate(
             "createdBy",
             "name lastName"
-        );
+        ).populate("companyID", "name description isActive")
+        .populate("categoryId", "name description isActive");
 
     if (!product) {
       res.status(404).json({
@@ -105,7 +108,7 @@ export const newProduct = async (
   }
 
   try {
-    const { name, description, isActive, quantity, price, published, includeTax } = req.body;
+    const { name, description, isActive, quantity, price, published, includeTax, categoryId, sku, cost, tax } = req.body;
 
     // Crear nueva compañía
     const newProduct = await Product.create({
@@ -117,27 +120,25 @@ export const newProduct = async (
       // images?: string[];
       quantity: quantity,
       price: price,
-      // cost?: number;
-      // sku?: string;
+      cost: cost,
+      sku: sku,
       // size?: string;
       // color?: string;
       published: published,
       includeTax: includeTax ?? false,
-      // tax?: number;
+      tax: tax || 0,
+      categoryId: categoryId,
     });
 
     // images?: string[];
-    // quantity: number;
-    // price: number;
-    // cost?: number;
-    // sku?: string;
     // size?: string;
     // color?: string;
-    // published: boolean;
-    // includeTax: boolean;
-    // tax?: number;
 
-    await newProduct.populate("createdBy", "name description isActive createdAt quantity price published includeTax");
+    await newProduct
+    .populate("createdBy", "name description isActive createdAt");
+    
+    await newProduct
+    .populate("categoryId", "name description isActive");
 
     res.status(201).json({
       success: true,
@@ -212,6 +213,13 @@ export const updateProduct = async (
       description: req.body.description || product.description,
       isActive:
         req.body.isActive !== undefined ? req.body.isActive : product.isActive,
+      categoryId: req.body.categoryId || product.categoryId,
+      quantity: req.body.quantity || product.quantity,
+      price: req.body.price || product.price,
+      published: req.body.published || product.published,
+      includeTax: req.body.includeTax || product.includeTax,
+      cost: req.body.cost || product.cost,
+      sku: req.body.sku || product.sku,
     };
 
     const updatedProduct = await Product.findByIdAndUpdate(
