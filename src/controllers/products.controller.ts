@@ -2,7 +2,7 @@
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import Product, { IProduct } from "../models/products";
-import User  from "../models/user";
+import User from "../models/user";
 
 // @desc    Obtener todas los products
 // @route   GET /api/products
@@ -12,15 +12,13 @@ export const getProducts = async (
   res: Response
 ): Promise<void> => {
   try {
-
     let filter = {};
 
     // Si no es admin, solo mostrar sus propias compañías
     if (req.user!.role !== "admin") {
-        // consulta al momento de la compañia activa
-        const user = await User.findById(req.user!.id)
-            .select("+activeCompany");
-        filter = { companyId: user!.activeCompany };
+      // consulta al momento de la compañia activa
+      const user = await User.findById(req.user!.id).select("+activeCompany");
+      filter = { companyId: user!.activeCompany };
     }
 
     const products = await Product.find(filter)
@@ -58,11 +56,9 @@ export const getProductById = async (
 ): Promise<void> => {
   try {
     const product = await Product.findById(req.params.id)
-        .populate(
-            "createdBy",
-            "name lastName"
-        ).populate("companyID", "name description isActive")
-        .populate("categoryId", "name description isActive");
+      .populate("createdBy", "name lastName")
+      .populate("companyID", "name description isActive")
+      .populate("categoryId", "name description isActive");
 
     if (!product) {
       res.status(404).json({
@@ -108,7 +104,20 @@ export const newProduct = async (
   }
 
   try {
-    const { name, description, isActive, quantity, price, published, includeTax, categoryId, sku, cost, tax } = req.body;
+    const {
+      name,
+      description,
+      isActive,
+      quantity,
+      price,
+      published,
+      includeTax,
+      categoryId,
+      sku,
+      cost,
+      tax,
+      color,
+    } = req.body;
 
     // Crear nueva compañía
     const newProduct = await Product.create({
@@ -123,10 +132,10 @@ export const newProduct = async (
       cost: cost,
       sku: sku,
       // size?: string;
-      // color?: string;
+      color: color,
       published: published,
       includeTax: includeTax ?? false,
-      tax: tax || 0,
+      tax: tax ?? 0,
       categoryId: categoryId,
     });
 
@@ -134,11 +143,12 @@ export const newProduct = async (
     // size?: string;
     // color?: string;
 
-    await newProduct
-    .populate("createdBy", "name description isActive createdAt");
-    
-    await newProduct
-    .populate("categoryId", "name description isActive");
+    await newProduct.populate(
+      "createdBy",
+      "name description isActive createdAt"
+    );
+
+    await newProduct.populate("categoryId", "name description isActive");
 
     res.status(201).json({
       success: true,
@@ -209,17 +219,18 @@ export const updateProduct = async (
 
     // Campos actualizables
     const fieldsToUpdate = {
-      name: req.body.name || product.name,
-      description: req.body.description || product.description,
+      name: req.body.name ?? product.name,
+      description: req.body.description ?? product.description,
       isActive:
         req.body.isActive !== undefined ? req.body.isActive : product.isActive,
-      categoryId: req.body.categoryId || product.categoryId,
-      quantity: req.body.quantity || product.quantity,
-      price: req.body.price || product.price,
-      published: req.body.published || product.published,
-      includeTax: req.body.includeTax || product.includeTax,
-      cost: req.body.cost || product.cost,
-      sku: req.body.sku || product.sku,
+      categoryId: req.body.categoryId ?? product.categoryId,
+      quantity: req.body.quantity ?? product.quantity,
+      price: req.body.price ?? product.price,
+      published: req.body.published ?? product.published,
+      includeTax: req.body.includeTax ?? product.includeTax,
+      cost: req.body.cost ?? product.cost,
+      sku: req.body.sku ?? product.sku,
+      color: req.body.color ?? product.color,
     };
 
     const updatedProduct = await Product.findByIdAndUpdate(
@@ -268,9 +279,9 @@ export const deleteProduct = async (
     // await Product.findByIdAndDelete(req.params.id);
 
     await Product.findByIdAndUpdate(
-        req.params.id,
-        { isActive: false },
-        // { runValidators: true }
+      req.params.id,
+      { isActive: false }
+      // { runValidators: true }
     );
 
     res.status(200).json({
