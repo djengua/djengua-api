@@ -117,7 +117,20 @@ export const newProduct = async (
       cost,
       tax,
       color,
+      images,
     } = req.body;
+
+    if (images && Array.isArray(images)) {
+      for (const image of images) {
+        if (!image.filename || !image.url || !image.contentType) {
+          res.status(400).json({
+            success: false,
+            message: "Cada imagen debe tener filename, url y contentType",
+          });
+          return;
+        }
+      }
+    }
 
     // Crear nueva compañía
     const newProduct = await Product.create({
@@ -126,22 +139,17 @@ export const newProduct = async (
       isActive: isActive ?? true,
       createdBy: req.user!.id,
       companyId: req.user!.activeCompany,
-      // images?: string[];
       quantity: quantity,
       price: price,
       cost: cost,
       sku: sku,
-      // size?: string;
       color: color,
       published: published,
       includeTax: includeTax ?? false,
       tax: tax ?? 0,
       categoryId: categoryId,
+      images: images || [],
     });
-
-    // images?: string[];
-    // size?: string;
-    // color?: string;
 
     await newProduct.populate(
       "createdBy",
@@ -176,11 +184,10 @@ export const newProduct = async (
         return;
       }
 
-      // Error de índice único (si agregaste índice único al nombre)
       if ((error as any).code === 11000) {
         res.status(409).json({
           success: false,
-          message: "Ya existe un producto con ese nombre",
+          message: "Ya existe un producto o sku con ese nombre",
         });
         return;
       }
@@ -217,32 +224,60 @@ export const updateProduct = async (
       return;
     }
 
-    // Campos actualizables
-    const fieldsToUpdate = {
-      name: req.body.name ?? product.name,
-      description: req.body.description ?? product.description,
-      isActive:
-        req.body.isActive !== undefined ? req.body.isActive : product.isActive,
-      categoryId: req.body.categoryId ?? product.categoryId,
-      quantity: req.body.quantity ?? product.quantity,
-      price: req.body.price ?? product.price,
-      published: req.body.published ?? product.published,
-      includeTax: req.body.includeTax ?? product.includeTax,
-      cost: req.body.cost ?? product.cost,
-      sku: req.body.sku ?? product.sku,
-      color: req.body.color ?? product.color,
-    };
+    if (req.body.images && Array.isArray(req.body.images)) {
+      for (const image of req.body.images) {
+        if (!image.filename || !image.url || !image.contentType) {
+          res.status(400).json({
+            success: false,
+            message: "Cada imagen debe tener filename, url y contentType",
+          });
+          return;
+        }
+      }
+    }
+
+    const fieldsToUpdate: Partial<IProduct> = {};
+
+    if (req.body.name !== undefined) fieldsToUpdate.name = req.body.name.trim();
+    if (req.body.description !== undefined) fieldsToUpdate.description = req.body.description?.trim() ?? "";
+    if (req.body.isActive !== undefined) fieldsToUpdate.isActive = req.body.isActive;
+    if (req.body.categoryId !== undefined) fieldsToUpdate.categoryId = req.body.categoryId;
+    if (req.body.quantity !== undefined) fieldsToUpdate.quantity = req.body.quantity;
+    if (req.body.price !== undefined) fieldsToUpdate.price = req.body.price;
+    if (req.body.published !== undefined) fieldsToUpdate.published = req.body.published;
+    if (req.body.includeTax !== undefined) fieldsToUpdate.includeTax = req.body.includeTax;
+    if (req.body.cost !== undefined) fieldsToUpdate.cost = req.body.cost;
+    if (req.body.sku !== undefined) fieldsToUpdate.sku = req.body.sku;
+    if (req.body.color !== undefined) fieldsToUpdate.color = req.body.color;
+    if (req.body.size !== undefined) fieldsToUpdate.size = req.body.size;
+    if (req.body.tax !== undefined) fieldsToUpdate.tax = req.body.tax;
+    if (req.body.images !== undefined) fieldsToUpdate.images = req.body.images;
 
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
       fieldsToUpdate,
       { new: true, runValidators: true }
-    );
+    )
+      .populate("createdBy", "name description isActive createdAt")
+      .populate("companyId", "name description")
+      .populate("categoryId", "name description isActive");
 
     res.status(200).json({
       success: true,
+      message: "Producto actualizado exitosamente",
       data: updatedProduct,
     });
+
+    // const updatedProduct = await Product.findByIdAndUpdate(
+    //   req.params.id,
+    //   fieldsToUpdate,
+    //   { new: true, runValidators: true }
+    // );
+
+    // res.status(200).json({
+    //   success: true,
+    //   data: updatedProduct,
+    // });
   } catch (error) {
     if (error instanceof Error) {
       res.status(500).json({

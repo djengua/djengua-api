@@ -15,7 +15,6 @@ export const getCompanies = async (
 
     // Si no es admin, solo mostrar sus propias compañías
     if (!["admin", "superadmin"].includes(req.user!.role) ) {
-      console.log('es usuario');
       filter = { createdBy: req.user!.id };
     }
 

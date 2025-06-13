@@ -1,6 +1,13 @@
 // src/models/User.ts
 import mongoose, { Document, Schema } from "mongoose";
 
+export interface IImages {
+  filename: string;
+  url: string;
+  contentType: string;
+  uploadDate: string;
+}
+
 export interface IProduct extends Document {
   name: string;
   description: string;
@@ -10,8 +17,7 @@ export interface IProduct extends Document {
   updatedAt: Date;
   companyId: mongoose.Types.ObjectId;
   categoryId?: mongoose.Types.ObjectId;
-  
-  images?: string[];
+  images?: IImages[];
   quantity: number;
   price: number;
   cost?: number;
@@ -22,6 +28,31 @@ export interface IProduct extends Document {
   includeTax: boolean;
   tax?: number;
 }
+
+const ImageSchema: Schema = new Schema({
+  filename: {
+    type: String,
+    required: [true, "El nombre del archivo es requerido"],
+    trim: true,
+  },
+  url: {
+    type: String,
+    required: [true, "La URL de la imagen es requerida"],
+    trim: true,
+  },
+  contentType: {
+    type: String,
+    required: [true, "El tipo de contenido es requerido"],
+    enum: {
+      values: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'],
+      message: 'Tipo de imagen no válido. Solo se permiten: jpeg, jpg, png, webp, gif'
+    }
+  },
+  uploadDate: {
+    type: Date,
+    default: Date.now,
+  }
+}, { _id: true });
 
 const ProductSchema: Schema = new Schema(
   {
@@ -54,17 +85,16 @@ const ProductSchema: Schema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "Category",
     },
-    images: [
-      {
-        type: String,
-        validate: {
-          validator: function (v: string) {
-            return /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i.test(v);
-          },
-          message: "La URL de la imagen no es válida",
+    images: {
+      type: [ImageSchema], // Array de ImageSchema
+      default: [],
+      validate: {
+        validator: function (images: IImages[]) {
+          return images.length <= 8; // Límite de 10 imágenes por producto
         },
-      },
-    ],
+        message: "No se pueden agregar más de 10 imágenes por producto"
+      }
+    },
     quantity: {
       type: Number,
       required: [true, "La cantidad es requerida"],
@@ -164,5 +194,9 @@ const ProductSchema: Schema = new Schema(
     },
   }
 );
+
+ProductSchema.index({ companyId: 1, isActive: 1 });
+ProductSchema.index({ categoryId: 1 });
+ProductSchema.index({ published: 1, isActive: 1 });
 
 export default mongoose.model<IProduct>("Product", ProductSchema);

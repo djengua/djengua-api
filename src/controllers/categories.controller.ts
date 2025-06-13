@@ -14,7 +14,6 @@ export const getCategories = async (
     let filter = {};
 
     if (!["admin", "superadmin"].includes(req.user!.role) ) {
-      console.log('es usuario');
       filter = { isActive: true };
     }
 
