@@ -13,9 +13,9 @@ export const getCategories = async (
   try {
     let filter = {};
 
-    if (!["admin", "superadmin"].includes(req.user!.role) ) {
-      filter = { isActive: true };
-    }
+    // if (!["admin", "superadmin"].includes(req.user!.role) ) {
+    //   filter = { isActive: true };
+    // }
 
     const categories = await Category.find(filter)
       .sort({ createdAt: -1 });
