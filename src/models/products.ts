@@ -8,6 +8,11 @@ export interface IImages {
   uploadDate: string;
 }
 
+export interface IColors {
+  color: string;
+  name: string;
+}
+
 export interface IProduct extends Document {
   name: string;
   description: string;
@@ -27,32 +32,61 @@ export interface IProduct extends Document {
   published: boolean;
   includeTax: boolean;
   tax?: number;
+  highlight: boolean;
+  offer?: number;
+  colors?: IColors[];
 }
 
-const ImageSchema: Schema = new Schema({
-  filename: {
-    type: String,
-    required: [true, "El nombre del archivo es requerido"],
-    trim: true,
+const ColorSchema: Schema = new Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "El nombre del color es requerido"],
+      trim: true,
+    },
+    color: {
+      type: String,
+      required: [true, "El valor hexadecimal del color es requerido"],
+      trim: true,
+    },
   },
-  url: {
-    type: String,
-    required: [true, "La URL de la imagen es requerida"],
-    trim: true,
+  { _id: true }
+);
+
+const ImageSchema: Schema = new Schema(
+  {
+    filename: {
+      type: String,
+      required: [true, "El nombre del archivo es requerido"],
+      trim: true,
+    },
+    url: {
+      type: String,
+      required: [true, "La URL de la imagen es requerida"],
+      trim: true,
+    },
+    contentType: {
+      type: String,
+      required: [true, "El tipo de contenido es requerido"],
+      enum: {
+        values: [
+          "image/jpeg",
+          "image/jpg",
+          "image/png",
+          "image/webp",
+          "image/gif",
+        ],
+        message:
+          "Tipo de imagen no válido. Solo se permiten: jpeg, jpg, png, webp, gif",
+      },
+    },
+    uploadDate: {
+      type: Date,
+      default: Date.now,
+    },
   },
-  contentType: {
-    type: String,
-    required: [true, "El tipo de contenido es requerido"],
-    enum: {
-      values: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'],
-      message: 'Tipo de imagen no válido. Solo se permiten: jpeg, jpg, png, webp, gif'
-    }
-  },
-  uploadDate: {
-    type: Date,
-    default: Date.now,
-  }
-}, { _id: true });
+  { _id: true }
+);
 
 const ProductSchema: Schema = new Schema(
   {
@@ -92,8 +126,8 @@ const ProductSchema: Schema = new Schema(
         validator: function (images: IImages[]) {
           return images.length <= 8; // Límite de 10 imágenes por producto
         },
-        message: "No se pueden agregar más de 10 imágenes por producto"
-      }
+        message: "No se pueden agregar más de 10 imágenes por producto",
+      },
     },
     quantity: {
       type: Number,
@@ -125,7 +159,7 @@ const ProductSchema: Schema = new Schema(
     sku: {
       type: String,
       unique: true,
-      sparse: true, // Permite múltiples documentos con sku null/undefined
+      // sparse: true, // Permite múltiples documentos con sku null/undefined
       trim: true,
       uppercase: true,
       maxlength: [50, "El SKU no puede tener más de 50 caracteres"],
@@ -171,6 +205,16 @@ const ProductSchema: Schema = new Schema(
           return v == null || (v >= 0 && v <= 100);
         },
         message: "El impuesto debe estar entre 0 y 100",
+      },
+    },
+    colors: {
+      type: [ColorSchema],
+      default: [],
+      validate: {
+        validator: function (images: IColors[]) {
+          return images.length <= 3;
+        },
+        message: "No se pueden agregar más de 3 colores",
       },
     },
   },

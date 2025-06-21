@@ -15,11 +15,17 @@ import userRoutes from "./routes/users.routes";
 import companiesRoutes from "./routes/companies.routes";
 import productsRoutes from "./routes/products.routes";
 import categoriesRoutes from "./routes/categories.routes";
+import ecommerceRoutes from "./routes/ecommerce.routes";
 
 const app: Application = express();
 
 const corsOptions = {
-  origin: ["http://localhost", "http://localhost:3000", "http://localhost:3001", "https://djengua.com"],
+  origin: [
+    "http://localhost",
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://djengua.com",
+  ],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true, // Permite cookies y autenticación
@@ -42,6 +48,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/companies", companiesRoutes);
 app.use("/api/products", productsRoutes);
 app.use("/api/categories", categoriesRoutes);
+app.use("/api/e-commerce", ecommerceRoutes);
 
 // Ruta de inicio
 app.get("/", (req: Request, res: Response) => {
