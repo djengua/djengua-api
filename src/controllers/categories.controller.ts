@@ -1,7 +1,16 @@
 // src/controllers/companies.controller.ts
+import mongoose from "mongoose";
+
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import Category from "../models/category";
+import Company from "../models/company";
+
+interface ICategoryFilter {
+  isActive: boolean;
+  userId?: mongoose.Types.ObjectId | string;
+  companyId?: mongoose.Types.ObjectId | string;
+}
 
 // @desc    Obtener todas las categories
 // @route   GET /api/categories
@@ -11,14 +20,16 @@ export const getCategories = async (
   res: Response
 ): Promise<void> => {
   try {
-    let filter = {};
+    let filter: ICategoryFilter = {
+      isActive: true,
+    };
 
-    // if (!["admin", "superadmin"].includes(req.user!.role) ) {
-    //   filter = { isActive: true };
-    // }
+    if (["admin"].includes(req.user!.role)) {
+      filter.isActive = true;
+      filter.userId = req.user!.id;
+    }
 
-    const categories = await Category.find(filter)
-      .sort({ createdAt: -1 });
+    const categories = await Category.find(filter).sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -96,6 +107,7 @@ export const newCategory = async (
   try {
     const { name, description, isActive } = req.body;
 
+    console.log(req.user!.id);
     // Verificar si ya existe una compañía con el mismo nombre (case insensitive)
     const existingCategory = await Category.findOne({
       name: new RegExp(`^${name.trim()}$`, "i"),
@@ -114,6 +126,7 @@ export const newCategory = async (
       name: name.trim(),
       description: description?.trim() ?? "",
       isActive: isActive ?? true,
+      userId: req.user!.id,
     });
 
     res.status(201).json({
@@ -234,10 +247,7 @@ export const deleteCategory = async (
       return;
     }
 
-    await Category.findByIdAndUpdate(
-      req.params.id,
-      { isActive: false },
-    );
+    await Category.findByIdAndUpdate(req.params.id, { isActive: false });
 
     res.status(200).json({
       success: true,
@@ -253,6 +263,49 @@ export const deleteCategory = async (
       res.status(500).json({
         success: false,
         message: "Error al eliminar categoria",
+      });
+    }
+  }
+};
+
+export const getPublicCategories = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    let filter: ICategoryFilter = {
+      isActive: true,
+    };
+
+    const company = await Company.findById(req.query.companyId).select(
+      "createdBy"
+    );
+
+    if (!company) {
+      throw new Error("Datos incorrectos, no encontrados");
+    }
+
+    filter.userId = company?.createdBy;
+
+    const categories = await Category.find(filter)
+      .select("name")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: categories.length,
+      data: categories,
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "Error al obtener las categorias",
       });
     }
   }

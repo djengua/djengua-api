@@ -16,7 +16,6 @@ const router = express.Router();
 // Todas las rutas requieren autenticación
 router.use(protect);
 
-
 router
   .route("/")
   .get(getCategories)

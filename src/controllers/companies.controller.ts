@@ -14,7 +14,7 @@ export const getCompanies = async (
     let filter = {};
 
     // Si no es admin, solo mostrar sus propias compañías
-    if (!["admin", "superadmin"].includes(req.user!.role) ) {
+    if (!["admin", "superadmin"].includes(req.user!.role)) {
       filter = { createdBy: req.user!.id };
     }
 
@@ -73,16 +73,6 @@ export const getCompanyById = async (
       return;
     }
 
-    // const mappedCompany = {
-    //   id: company._id,
-    //   name: company.name,
-    //   description: company.description,
-    //   isActive: company.isActive,
-    //   createdBy: company.createdBy,
-    //   createdAt: company.createdAt,
-    //   updatedAt: company.updatedAt,
-    // };
-
     res.status(200).json({
       success: true,
       data: company,
@@ -124,7 +114,7 @@ export const newCompany = async (
     // Verificar si ya existe una compañía con el mismo nombre (case insensitive)
     const existingCompany = await Company.findOne({
       name: new RegExp(`^${name.trim()}$`, "i"),
-      createdBy: req.user!.id
+      createdBy: req.user!.id,
     });
 
     if (existingCompany) {
@@ -267,7 +257,7 @@ export const deleteCompany = async (
 
     await Company.findByIdAndUpdate(
       req.params.id,
-      { isActive: false },
+      { isActive: false }
       // { runValidators: true }
     );
 
@@ -285,6 +275,42 @@ export const deleteCompany = async (
       res.status(500).json({
         success: false,
         message: "Error al eliminar compañia",
+      });
+    }
+  }
+};
+
+export const getPublicCompany = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const company = await Company.findById(req.params.id).select(
+      "name description"
+    );
+
+    if (!company) {
+      res.status(404).json({
+        success: false,
+        message: "Compañia no encontrada",
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: company,
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "Error al obtener compania",
       });
     }
   }
