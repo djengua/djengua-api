@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import Company, { ICompany } from "../models/company";
+import User from "../models/user";
 
 interface ICompanyFilter {
   isActive: boolean;
@@ -12,7 +13,6 @@ interface ICompanyFilter {
   // role?: string;
   // email?: string;
 }
-
 
 // @desc    Obtener todas los companies
 // @route   GET /api/companies
@@ -41,16 +41,11 @@ export const getCompanies = async (
       }
     }
 
-    // // Si no es admin, solo mostrar sus propias compañías
-    // if (!["admin", "superadmin"].includes(req.user!.role)) {
-    //   filter = { createdBy: req.user!.id };
-    // }
-
     const companies = await Company.find(filter)
       .populate("createdBy", "name lastName email")
       .sort({ createdAt: -1 });
 
-      res.status(200).json({
+    res.status(200).json({
       success: true,
       count: companies.length,
       data: companies,
@@ -144,19 +139,55 @@ export const newCompany = async (
     }
 
     // Crear nueva compañía
-    const newCompany = await Company.create({
+    const newCompanyDoc = await Company.create({
       name: name.trim(),
       description: description?.trim() ?? "",
       isActive: isActive ?? true,
       createdBy: req.user!.id,
     });
 
-    await newCompany.populate("createdBy", "name lastName email");
+    // Actualizar el usuario creador solo si es admin
+    if (req.user!.role === "admin") {
+      const user = await User.findById(req.user!.id);
+
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: "Usuario no encontrado",
+        });
+        return;
+      }
+
+      // Agregar la nueva compañía al array de companies
+      const updatedCompanies = [...(user.companies || []), newCompanyDoc._id];
+      // let activeCompany: mongoose.Types.ObjectId;
+
+      // Determinar activeCompany:
+      // - Si no tiene activeCompany, asignar la nueva compañía
+      // - Si ya tiene activeCompany, mantenerlo
+      let activeCompany = user.activeCompany;
+      if (!activeCompany) {
+        activeCompany = newCompanyDoc._id as mongoose.Types.ObjectId;
+      }
+
+      // Actualizar el usuario (usando req.user!.id en lugar de req.params.id)
+      await User.findByIdAndUpdate(
+        req.user!.id, // CORRECCIÓN: usar req.user!.id en lugar de req.params.id
+        {
+          companies: updatedCompanies,
+          activeCompany: activeCompany,
+        },
+        { new: true } // Opcional: devuelve el documento actualizado
+      );
+    }
+
+    // Poblar la información del creador
+    await newCompanyDoc.populate("createdBy", "name lastName email");
 
     res.status(201).json({
       success: true,
       message: "Compañía creada exitosamente",
-      data: newCompany,
+      data: newCompanyDoc,
     });
   } catch (error) {
     console.error("Error creating company:", error);
@@ -179,7 +210,7 @@ export const newCompany = async (
         return;
       }
 
-      // Error de índice único (si agregaste índice único al nombre)
+      // Error de índice único
       if ((error as any).code === 11000) {
         res.status(409).json({
           success: false,

@@ -16,10 +16,19 @@ interface IUserFilter {
 
 export const fetchMe = async (req: Request, res: Response): Promise<void> => {
   try {
-    const user = await User.findById(req.user!.id).populate({
-      path: "activeCompany",
-      select: "name description isActive",
-    });
+    const user = await User.findById(req.user!.id)
+      .populate({
+        path: "activeCompany",
+        select: "name description",
+        match: { isActive: true },
+      })
+      .populate({
+        path: "companies",
+        select: "name description",
+        match: { isActive: true },
+      });
+
+    console.log(user);
 
     if (!user) {
       res.status(404).json({
@@ -177,17 +186,17 @@ export const updateUser = async (
       return;
     }
 
-    
-
     // Campos actualizables
     const fieldsToUpdate = {
       name: req.body.name || user.name,
       lastName: req.body.lastName || user.lastName,
       email: req.body.email || user.email,
-      activeCompany: req.body.activeCompany || user.activeCompany,
+      // activeCompany: req.body.activeCompany || user.activeCompany,
       role: req.body.role || user.role,
       isActive:
         req.body.isActive !== undefined ? req.body.isActive : user.isActive,
+      phone: req.body.phone || user.phone,
+      companies: req.body.companies || [],
     };
 
     if (req.body.password) {
@@ -336,24 +345,16 @@ export const newUser = async (req: Request, res: Response): Promise<void> => {
       throw new Error("El usuario no tiene permisos.");
     }
 
-    const {
-      name,
-      email,
-      lastName,
-      password,
-      activeCompany,
-    } = req.body;
+    const { name, email, lastName, password, activeCompany, companies, phone } =
+      req.body;
 
-    const genPassword = generateRandomText();
-    console.log(genPassword);
-    
     // Verificar si el usuario ya existe
     const userExists = await User.findOne({ email, createdBy }).select("id");
 
     if (userExists) {
       res.status(400).json({
         success: false,
-        message: "El usuario ya existe",
+        message: "El usuario ya existe.",
       });
       return;
     }
@@ -363,14 +364,14 @@ export const newUser = async (req: Request, res: Response): Promise<void> => {
       name,
       lastName,
       email,
-      password: genPassword,
-      role: 'user',
+      password: !password && password.length === 0 ? "password" : password,
+      role: "user",
       isActive: true,
       activeCompany,
       createdBy,
+      companies,
+      phone,
     });
-
-
 
     res.status(201).json({
       success: true,

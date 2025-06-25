@@ -46,6 +46,9 @@ router
         .withMessage("El nombre es obligatorio")
         .withMessage("Email incorrecto"),
       body("lastName").optional().trim(),
+      body("role").optional(),
+      body("password").optional(),
+      body("companies").optional(),
     ],
     newUser
   );

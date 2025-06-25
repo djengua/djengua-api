@@ -17,6 +17,8 @@ export interface IUser extends Document {
   matchPassword(enteredPassword: string): Promise<boolean>;
   getSignedJwtToken(): string;
   createdBy?: mongoose.Types.ObjectId;
+  companies: mongoose.Types.ObjectId[];
+  phone: string;
 }
 
 const UserSchema: Schema = new Schema(
@@ -50,7 +52,7 @@ const UserSchema: Schema = new Schema(
     },
     role: {
       type: String,
-      enum: ["user", "admin"],
+      enum: ["user", "admin", "superadmin"],
       default: "user",
     },
     isActive: {
@@ -68,6 +70,14 @@ const UserSchema: Schema = new Schema(
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
+    },
+    companies: {
+      type: [Schema.Types.ObjectId],
+      ref: "Company",
+      default: [],
+    },
+    phone: {
+      type: String,
     },
   },
   {
