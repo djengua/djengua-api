@@ -24,9 +24,15 @@ export const getCategories = async (
       isActive: true,
     };
 
-    if (["admin"].includes(req.user!.role)) {
-      filter.isActive = true;
+    if (req.user!.role === "admin") {
       filter.userId = req.user!.id;
+    } else if (req.user!.role === "user") {
+      // Es usuario creado por admin
+      if (!req.user?.createdBy) {
+        filter.userId = req.user?.createdBy;
+      } else {
+        throw new Error("Categorias: Algo ocurrio consulte con el administrador.");
+      }
     }
 
     const categories = await Category.find(filter).sort({ createdAt: -1 });
@@ -107,7 +113,6 @@ export const newCategory = async (
   try {
     const { name, description, isActive } = req.body;
 
-    console.log(req.user!.id);
     // Verificar si ya existe una compañía con el mismo nombre (case insensitive)
     const existingCategory = await Category.findOne({
       name: new RegExp(`^${name.trim()}$`, "i"),

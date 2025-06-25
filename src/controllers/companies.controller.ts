@@ -1,7 +1,18 @@
 // src/controllers/companies.controller.ts
+import mongoose from "mongoose";
+
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import Company, { ICompany } from "../models/company";
+
+interface ICompanyFilter {
+  isActive: boolean;
+  createdBy?: mongoose.Types.ObjectId | string;
+  // activeCompany?: mongoose.Types.ObjectId | string;
+  // role?: string;
+  // email?: string;
+}
+
 
 // @desc    Obtener todas los companies
 // @route   GET /api/companies
@@ -11,28 +22,35 @@ export const getCompanies = async (
   res: Response
 ): Promise<void> => {
   try {
-    let filter = {};
+    let filter: ICompanyFilter = {
+      isActive: true,
+    };
 
-    // Si no es admin, solo mostrar sus propias compañías
-    if (!["admin", "superadmin"].includes(req.user!.role)) {
-      filter = { createdBy: req.user!.id };
+    if (req.user!.role === "admin") {
+      filter.createdBy = req.user!.id;
+    } else if (req.user!.role === "user") {
+      // Es usuario creado por admin
+      if (req.user?.createdBy !== undefined || req.user?.createdBy !== null) {
+        console.log(req.user?.createdBy);
+        filter.createdBy = req.user?.createdBy;
+      } else {
+        console.log(req.user?.createdBy);
+        throw new Error(
+          "Compañias: Algo ocurrio consulte con el administrador."
+        );
+      }
     }
+
+    // // Si no es admin, solo mostrar sus propias compañías
+    // if (!["admin", "superadmin"].includes(req.user!.role)) {
+    //   filter = { createdBy: req.user!.id };
+    // }
 
     const companies = await Company.find(filter)
       .populate("createdBy", "name lastName email")
       .sort({ createdAt: -1 });
 
-    // const companies = data.map((company: ICompany) => ({
-    //   id: company._id,
-    //   name: company.name,
-    //   description: company.description,
-    //   createdBy: company.createdBy,
-    //   isActive: company.isActive,
-    //   createdAt: company.createdAt,
-    //   updatedAt: company.updatedAt,
-    // }));
-
-    res.status(200).json({
+      res.status(200).json({
       success: true,
       count: companies.length,
       data: companies,

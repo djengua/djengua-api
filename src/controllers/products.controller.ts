@@ -1,8 +1,18 @@
 // src/controllers/products.controller.ts
+import mongoose from "mongoose";
+
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import Product, { IProduct } from "../models/products";
 import User from "../models/user";
+
+interface IProductFilter {
+  isActive: boolean;
+  companyId?: mongoose.Types.ObjectId | string;
+  // activeCompany?: mongoose.Types.ObjectId | string;
+  // role?: string;
+  // email?: string;
+}
 
 // @desc    Obtener todas los products
 // @route   GET /api/products
@@ -12,14 +22,11 @@ export const getProducts = async (
   res: Response
 ): Promise<void> => {
   try {
-    let filter = {};
+    let filter: IProductFilter = {
+      isActive: true,
+    };
 
-    // Si no es admin, solo mostrar sus propias compañías
-    if (req.user!.role !== "admin") {
-      // consulta al momento de la compañia activa
-      const user = await User.findById(req.user!.id).select("+activeCompany");
-      filter = { companyId: user!.activeCompany };
-    }
+    filter.companyId = req.user!.activeCompany;
 
     const products = await Product.find(filter)
       .populate("createdBy", "name description isActive createdAt companyId ")

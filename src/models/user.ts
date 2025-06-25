@@ -16,6 +16,7 @@ export interface IUser extends Document {
   avatar: string;
   matchPassword(enteredPassword: string): Promise<boolean>;
   getSignedJwtToken(): string;
+  createdBy?: mongoose.Types.ObjectId;
 }
 
 const UserSchema: Schema = new Schema(
@@ -63,6 +64,10 @@ const UserSchema: Schema = new Schema(
     avatar: {
       type: String,
       default: "/avatars/profile.jpg",
+    },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
     },
   },
   {
