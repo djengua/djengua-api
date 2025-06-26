@@ -35,15 +35,12 @@ export const getProducts = async (
       filter.name = { $regex: searchTerm, $options: "i" };
     }
 
-    console.log(filter);
-    console.log(req.query);
-
     const products = await Product.find(filter)
       .populate("companyId", "name")
       .populate("categoryId", "name")
       .sort({ createdAt: -1 })
       .select(
-        "name description companyId categoryId images quantity price cost sku color id"
+        "name description companyId categoryId images quantity price cost sku color specs id"
       );
 
     res.status(200).json({

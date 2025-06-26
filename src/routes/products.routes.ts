@@ -29,6 +29,11 @@ router
         .withMessage("El nombre debe tener entre 2 y 50 caracteres")
         .trim()
         .escape(),
+      body("sku")
+        .notEmpty()
+        .withMessage("El sku es obligatorio")
+        .trim()
+        .toUpperCase(),
     ],
     // authorize("admin"),
     newProduct

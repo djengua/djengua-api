@@ -13,6 +13,11 @@ export interface IColors {
   name: string;
 }
 
+export interface ISpec {
+  name: string;
+  value: string;
+}
+
 export interface IProduct extends Document {
   name: string;
   description: string;
@@ -34,7 +39,8 @@ export interface IProduct extends Document {
   tax?: number;
   highlight: boolean;
   offer?: number;
-  colors?: IColors[];
+  rating: number;
+  specs?: ISpec[];
 }
 
 const ColorSchema: Schema = new Schema(
@@ -47,6 +53,22 @@ const ColorSchema: Schema = new Schema(
     color: {
       type: String,
       required: [true, "El valor hexadecimal del color es requerido"],
+      trim: true,
+    },
+  },
+  { _id: true }
+);
+
+const SpecSchema: Schema = new Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "El nombre de la especificacion es requerido"],
+      trim: true,
+    },
+    value: {
+      type: String,
+      required: [true, "El valor de la especificacion es requerido"],
       trim: true,
     },
   },
@@ -207,15 +229,13 @@ const ProductSchema: Schema = new Schema(
         message: "El impuesto debe estar entre 0 y 100",
       },
     },
-    colors: {
-      type: [ColorSchema],
+    specs: {
+      type: [SpecSchema],
       default: [],
-      validate: {
-        validator: function (images: IColors[]) {
-          return images.length <= 3;
-        },
-        message: "No se pueden agregar más de 3 colores",
-      },
+    },
+    rating: {
+      type: Number,
+      default: 0,
     },
   },
   {

@@ -125,6 +125,7 @@ export const newProduct = async (
       tax,
       color,
       images,
+      specs,
     } = req.body;
 
     if (images && Array.isArray(images)) {
@@ -155,7 +156,8 @@ export const newProduct = async (
       includeTax: includeTax ?? false,
       tax: tax ?? 0,
       categoryId: categoryId,
-      images: images || [],
+      images: images ?? [],
+      specs: specs ?? [],
     });
 
     await newProduct.populate(
@@ -246,19 +248,26 @@ export const updateProduct = async (
     const fieldsToUpdate: Partial<IProduct> = {};
 
     if (req.body.name !== undefined) fieldsToUpdate.name = req.body.name.trim();
-    if (req.body.description !== undefined) fieldsToUpdate.description = req.body.description?.trim() ?? "";
-    if (req.body.isActive !== undefined) fieldsToUpdate.isActive = req.body.isActive;
-    if (req.body.categoryId !== undefined) fieldsToUpdate.categoryId = req.body.categoryId;
-    if (req.body.quantity !== undefined) fieldsToUpdate.quantity = req.body.quantity;
+    if (req.body.description !== undefined)
+      fieldsToUpdate.description = req.body.description?.trim() ?? "";
+    if (req.body.isActive !== undefined)
+      fieldsToUpdate.isActive = req.body.isActive;
+    if (req.body.categoryId !== undefined)
+      fieldsToUpdate.categoryId = req.body.categoryId;
+    if (req.body.quantity !== undefined)
+      fieldsToUpdate.quantity = req.body.quantity;
     if (req.body.price !== undefined) fieldsToUpdate.price = req.body.price;
-    if (req.body.published !== undefined) fieldsToUpdate.published = req.body.published;
-    if (req.body.includeTax !== undefined) fieldsToUpdate.includeTax = req.body.includeTax;
+    if (req.body.published !== undefined)
+      fieldsToUpdate.published = req.body.published;
+    if (req.body.includeTax !== undefined)
+      fieldsToUpdate.includeTax = req.body.includeTax;
     if (req.body.cost !== undefined) fieldsToUpdate.cost = req.body.cost;
     if (req.body.sku !== undefined) fieldsToUpdate.sku = req.body.sku;
     if (req.body.color !== undefined) fieldsToUpdate.color = req.body.color;
     if (req.body.size !== undefined) fieldsToUpdate.size = req.body.size;
     if (req.body.tax !== undefined) fieldsToUpdate.tax = req.body.tax;
     if (req.body.images !== undefined) fieldsToUpdate.images = req.body.images;
+    if (req.body.specs !== undefined) fieldsToUpdate.specs = req.body.specs;
 
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
@@ -274,17 +283,6 @@ export const updateProduct = async (
       message: "Producto actualizado exitosamente",
       data: updatedProduct,
     });
-
-    // const updatedProduct = await Product.findByIdAndUpdate(
-    //   req.params.id,
-    //   fieldsToUpdate,
-    //   { new: true, runValidators: true }
-    // );
-
-    // res.status(200).json({
-    //   success: true,
-    //   data: updatedProduct,
-    // });
   } catch (error) {
     if (error instanceof Error) {
       res.status(500).json({

@@ -28,8 +28,6 @@ export const fetchMe = async (req: Request, res: Response): Promise<void> => {
         match: { isActive: true },
       });
 
-    console.log(user);
-
     if (!user) {
       res.status(404).json({
         success: false,
@@ -92,7 +90,7 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
     const data = await User.find(filter)
       .populate({
         path: "activeCompany",
-        select: "name description isActive", // Solo campos necesarios
+        select: "name description", // Solo campos necesarios
         match: { isActive: true }, // Solo compañías activas
       })
       .select("-password") // Excluir explícitamente la contraseña
@@ -186,23 +184,67 @@ export const updateUser = async (
       return;
     }
 
+    const updatedCompanies: string[] =
+      req.body.companies ?? user.companies ?? [];
+
+    let activeCompany: mongoose.Types.ObjectId | string | null =
+      user.activeCompany;
+
+    console.log(req.body.activeCompany);
+    if (!req.body.activeCompany || req.body.activeCompany === "") {
+      activeCompany = null;
+      console.log(1);
+    } else {
+      console.log(2);
+      const activeCompanyId = req.body.activeCompany;
+
+      if (updatedCompanies.includes(activeCompanyId)) {
+        activeCompany = req.body.activeCompany;
+      } else {
+        activeCompany =
+          updatedCompanies.length > 0 ? updatedCompanies[0] : null;
+      }
+    }
+
+    // Si no se proporciona activeCompany, validar el existente
+    if (user.activeCompany) {
+      const currentActiveCompanyId = user.activeCompany.toString();
+      const companiesAsStrings = updatedCompanies.map((c) => c.toString());
+
+      if (!companiesAsStrings.includes(currentActiveCompanyId)) {
+        activeCompany =
+          updatedCompanies.length > 0 ? updatedCompanies[0] : null;
+      }
+    }
+
     // Campos actualizables
-    const fieldsToUpdate = {
-      name: req.body.name || user.name,
-      lastName: req.body.lastName || user.lastName,
-      email: req.body.email || user.email,
-      // activeCompany: req.body.activeCompany || user.activeCompany,
-      role: req.body.role || user.role,
+    const fieldsToUpdate: {
+      name: string;
+      lastName: string;
+      email: string;
+      activeCompany?: mongoose.Types.ObjectId | string | null;
+      role: string;
+      isActive: boolean;
+      phone?: string;
+      password?: string;
+      companies: string[];
+    } = {
+      name: req.body.name ?? user.name,
+      lastName: req.body.lastName ?? user.lastName,
+      email: req.body.email ?? user.email,
+      activeCompany: activeCompany, // Usar el valor validado
+      role: req.body.role ?? user.role,
       isActive:
         req.body.isActive !== undefined ? req.body.isActive : user.isActive,
-      phone: req.body.phone || user.phone,
-      companies: req.body.companies || [],
+      phone: req.body.phone ?? user.phone,
+      companies: updatedCompanies,
     };
 
-    if (req.body.password) {
-      // fieldsToUpdate = {...fieldsToUpdate , password: genPassword};
+    // Manejo de password reset
+    if (req.body.password || req.body.reset) {
       const genPassword = generateRandomText();
-      console.log(genPassword);
+      fieldsToUpdate.password = genPassword;
+      console.log("Password generado:", genPassword);
     }
 
     const updatedUser = await User.findByIdAndUpdate(
@@ -214,9 +256,38 @@ export const updateUser = async (
     res.status(200).json({
       success: true,
       data: updatedUser,
+      message: "Usuario actualizado exitosamente",
     });
   } catch (error) {
+    console.error("Error updating user:", error);
+
     if (error instanceof Error) {
+      // Error de validación de Mongoose
+      if (error.name === "ValidationError") {
+        const validationErrors = Object.values((error as any).errors).map(
+          (err: any) => ({
+            field: err.path,
+            message: err.message,
+          })
+        );
+
+        res.status(400).json({
+          success: false,
+          message: "Error de validación",
+          errors: validationErrors,
+        });
+        return;
+      }
+
+      // Error de duplicación (email único)
+      if ((error as any).code === 11000) {
+        res.status(409).json({
+          success: false,
+          message: "Ya existe un usuario con ese email",
+        });
+        return;
+      }
+
       res.status(500).json({
         success: false,
         message: error.message,

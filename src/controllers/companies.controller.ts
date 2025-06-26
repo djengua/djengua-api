@@ -7,7 +7,8 @@ import Company, { ICompany } from "../models/company";
 import User from "../models/user";
 
 interface ICompanyFilter {
-  isActive: boolean;
+  deleted: boolean;
+  isActive?: boolean;
   createdBy?: mongoose.Types.ObjectId | string;
   // activeCompany?: mongoose.Types.ObjectId | string;
   // role?: string;
@@ -23,7 +24,8 @@ export const getCompanies = async (
 ): Promise<void> => {
   try {
     let filter: ICompanyFilter = {
-      isActive: true,
+      deleted: false,
+      // isActive: true,
     };
 
     if (req.user!.role === "admin") {
@@ -31,10 +33,8 @@ export const getCompanies = async (
     } else if (req.user!.role === "user") {
       // Es usuario creado por admin
       if (req.user?.createdBy !== undefined || req.user?.createdBy !== null) {
-        console.log(req.user?.createdBy);
         filter.createdBy = req.user?.createdBy;
       } else {
-        console.log(req.user?.createdBy);
         throw new Error(
           "Compañias: Algo ocurrio consulte con el administrador."
         );
@@ -302,13 +302,7 @@ export const deleteCompany = async (
       return;
     }
 
-    // await Company.findByIdAndDelete(req.params.id);
-
-    await Company.findByIdAndUpdate(
-      req.params.id,
-      { isActive: false }
-      // { runValidators: true }
-    );
+    await Company.findByIdAndUpdate(req.params.id, { deleted: true });
 
     res.status(200).json({
       success: true,

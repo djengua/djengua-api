@@ -8,6 +8,7 @@ export interface ICompany extends Document {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  deleted: boolean;
 }
 
 const CompanySchema: Schema = new Schema(
@@ -32,25 +33,29 @@ const CompanySchema: Schema = new Schema(
       ref: "User",
       required: [true, "El usuario creador es requerido"],
     },
+    deleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
-    toJSON: { 
-      transform: function(doc, ret) {
+    toJSON: {
+      transform: function (doc, ret) {
         ret.id = ret._id;
         delete ret._id;
         delete ret.__v;
         return ret;
-      }
+      },
     },
-    toObject: { 
-      transform: function(doc, ret) {
+    toObject: {
+      transform: function (doc, ret) {
         ret.id = ret._id;
         delete ret._id;
         delete ret.__v;
         return ret;
-      }
-    }
+      },
+    },
   }
 );
 
