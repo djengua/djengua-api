@@ -38,9 +38,11 @@ export interface IProduct extends Document {
   includeTax: boolean;
   tax?: number;
   highlight: boolean;
-  offer?: number;
-  rating: number;
+  rating?: number;
   specs?: ISpec[];
+  free_shipping?: boolean;
+  warranty?: boolean;
+  discount?: number;
 }
 
 const ColorSchema: Schema = new Schema(
@@ -236,6 +238,21 @@ const ProductSchema: Schema = new Schema(
     rating: {
       type: Number,
       default: 0,
+    },
+
+    discount: {
+      type: Number,
+      required: [true, "La cantidad es requerida"],
+      min: [0, "La cantidad no puede ser negativa"],
+      default: 0,
+    },
+    free_shipping: {
+      type: Boolean,
+      default: true,
+    },
+    warranty: {
+      type: Boolean,
+      default: false,
     },
   },
   {

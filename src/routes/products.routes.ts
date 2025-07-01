@@ -11,31 +11,48 @@ import {
   updateProduct,
 } from "../controllers/products.controller";
 
+import { handleValidationErrors } from "../utils/validations";
+
 const router = express.Router();
+
+const createProductValidation = [
+  body("product.name")
+    .notEmpty()
+    .withMessage("El nombre es obligatorio"),
+  body("product.categoryId")
+    .notEmpty()
+    .withMessage("La categoria es obligatoria"),
+  body("product.sku")
+      .notEmpty()
+      .withMessage("El sku es obligatorio")
+      .trim()
+      .toUpperCase(),
+];
+
+const updateProductValidation = [
+  param("id").isMongoId().withMessage("ID de compañía inválido"),
+    body("product.name")
+    .notEmpty()
+    .withMessage("El nombre es obligatorio"),
+  body("product.categoryId")
+    .notEmpty()
+    .withMessage("La categoria es obligatoria"),
+  body("product.sku")
+      .notEmpty()
+      .withMessage("El sku es obligatorio")
+      .trim()
+      .toUpperCase(),
+];
 
 // Todas las rutas requieren autenticación
 router.use(protect);
 
-// products.routes.ts
 router
   .route("/")
   .get(getProducts)
   .post(
-    [
-      body("name")
-        .notEmpty()
-        .withMessage("El nombre es obligatorio")
-        .isLength({ min: 2, max: 50 })
-        .withMessage("El nombre debe tener entre 2 y 50 caracteres")
-        .trim()
-        .escape(),
-      body("sku")
-        .notEmpty()
-        .withMessage("El sku es obligatorio")
-        .trim()
-        .toUpperCase(),
-    ],
-    // authorize("admin"),
+    createProductValidation,
+    handleValidationErrors,
     newProduct
   );
 
@@ -43,17 +60,8 @@ router
   .route("/:id")
   .get(getProductById)
   .put(
-    [
-      param("id").isMongoId().withMessage("ID de compañía inválido"),
-
-      body("name")
-        .optional()
-        .isLength({ min: 2, max: 50 })
-        .withMessage("El nombre debe tener entre 2 y 50 caracteres")
-        .trim()
-        .escape(),
-    ],
-    // authorize("admin"),
+    updateProductValidation,
+    handleValidationErrors,
     updateProduct
   )
   .delete(authorize("admin"), deleteProduct);

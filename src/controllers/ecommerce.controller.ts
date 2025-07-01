@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import Product from "../models/products";
 
 interface IProductFilter {
+  isActive: boolean;
   companyId: string;
   published: boolean;
   categoryId?: string;
@@ -19,6 +20,7 @@ export const getProducts = async (
   try {
     let filter: IProductFilter = {
       companyId: req.params.companyId,
+      isActive: true,
       published: true,
     };
 
@@ -36,12 +38,12 @@ export const getProducts = async (
     }
 
     const products = await Product.find(filter)
-      .populate("companyId", "name")
-      .populate("categoryId", "name")
-      .sort({ createdAt: -1 })
       .select(
-        "name description companyId categoryId images quantity price cost sku color specs id"
-      );
+        "name description companyId categoryId images quantity price cost sku color specs id fre_shipping warranty discount"
+      )
+      .populate("companyId", "name")
+      .populate("categoryId", "name description")
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -71,8 +73,13 @@ export const getProductById = async (
   res: Response
 ): Promise<void> => {
   try {
-    console.log(req.params);
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id)
+      .select(
+        "name description companyId categoryId images quantity price cost sku color specs id fre_shipping warranty discount"
+      )
+      .populate("companyId", "name")
+      .populate("categoryId", "name")
+      .sort({ createdAt: -1 });
 
     if (!product) {
       res.status(404).json({

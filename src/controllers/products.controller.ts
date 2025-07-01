@@ -4,14 +4,11 @@ import mongoose from "mongoose";
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import Product, { IProduct } from "../models/products";
-import User from "../models/user";
+import Category from "../models/category";
 
 interface IProductFilter {
-  isActive: boolean;
+  isActive?: boolean;
   companyId?: mongoose.Types.ObjectId | string;
-  // activeCompany?: mongoose.Types.ObjectId | string;
-  // role?: string;
-  // email?: string;
 }
 
 // @desc    Obtener todas los products
@@ -23,10 +20,12 @@ export const getProducts = async (
 ): Promise<void> => {
   try {
     let filter: IProductFilter = {
-      isActive: true,
+      // isActive: true,
     };
 
     filter.companyId = req.user!.activeCompany;
+
+    console.log(filter);
 
     const products = await Product.find(filter)
       .populate("createdBy", "name description isActive createdAt companyId ")
@@ -101,16 +100,18 @@ export const newProduct = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    res.status(400).json({
-      success: false,
-      errors: errors.array(),
-    });
-    return;
-  }
-
+  console.log(1);
+  // const errors = validationResult(req);
+  // if (!errors.isEmpty()) {
+  //   res.status(400).json({
+  //     success: false,
+  //     errors: errors.array(),
+  //   });
+  //   return;
+  // }
+  
   try {
+    const { product } = req.body;
     const {
       name,
       description,
@@ -126,7 +127,10 @@ export const newProduct = async (
       color,
       images,
       specs,
-    } = req.body;
+      free_shipping,
+      warranty,
+      discount,
+    } = product;
 
     if (images && Array.isArray(images)) {
       for (const image of images) {
@@ -138,6 +142,16 @@ export const newProduct = async (
           return;
         }
       }
+    }
+
+    const category = await Category.findById(categoryId.id);
+
+    if(!category) {
+        res.status(400).json({
+          success: false,
+          errors: "La categoria no existe",
+        });
+        return;
     }
 
     // Crear nueva compañía
@@ -155,9 +169,12 @@ export const newProduct = async (
       published: published,
       includeTax: includeTax ?? false,
       tax: tax ?? 0,
-      categoryId: categoryId,
+      categoryId: category, // categoryId,
       images: images ?? [],
       specs: specs ?? [],
+      free_shipping: free_shipping ?? false,
+      warranty: warranty ?? false,
+      discount: discount ?? 0,
     });
 
     await newProduct.populate(
@@ -223,6 +240,7 @@ export const updateProduct = async (
   }
 
   try {
+
     const product = await Product.findById(req.params.id);
 
     if (!product) {
@@ -232,6 +250,30 @@ export const updateProduct = async (
       });
       return;
     }
+
+
+    const { product: updProd } = req.body;
+    const {
+      name,
+      description,
+      isActive,
+      quantity,
+      price,
+      published,
+      includeTax,
+      categoryId,
+      sku,
+      size,
+      cost,
+      tax,
+      color,
+      images,
+      specs,
+      free_shipping,
+      warranty,
+      discount,
+    } = updProd;
+
 
     if (req.body.images && Array.isArray(req.body.images)) {
       for (const image of req.body.images) {
@@ -247,27 +289,39 @@ export const updateProduct = async (
 
     const fieldsToUpdate: Partial<IProduct> = {};
 
-    if (req.body.name !== undefined) fieldsToUpdate.name = req.body.name.trim();
-    if (req.body.description !== undefined)
-      fieldsToUpdate.description = req.body.description?.trim() ?? "";
-    if (req.body.isActive !== undefined)
-      fieldsToUpdate.isActive = req.body.isActive;
-    if (req.body.categoryId !== undefined)
-      fieldsToUpdate.categoryId = req.body.categoryId;
-    if (req.body.quantity !== undefined)
-      fieldsToUpdate.quantity = req.body.quantity;
-    if (req.body.price !== undefined) fieldsToUpdate.price = req.body.price;
-    if (req.body.published !== undefined)
-      fieldsToUpdate.published = req.body.published;
-    if (req.body.includeTax !== undefined)
-      fieldsToUpdate.includeTax = req.body.includeTax;
-    if (req.body.cost !== undefined) fieldsToUpdate.cost = req.body.cost;
-    if (req.body.sku !== undefined) fieldsToUpdate.sku = req.body.sku;
-    if (req.body.color !== undefined) fieldsToUpdate.color = req.body.color;
-    if (req.body.size !== undefined) fieldsToUpdate.size = req.body.size;
-    if (req.body.tax !== undefined) fieldsToUpdate.tax = req.body.tax;
-    if (req.body.images !== undefined) fieldsToUpdate.images = req.body.images;
-    if (req.body.specs !== undefined) fieldsToUpdate.specs = req.body.specs;
+    if (name !== undefined) fieldsToUpdate.name = name.trim();
+    if (description !== undefined)
+      fieldsToUpdate.description = description?.trim() ?? "";
+    if (isActive !== undefined)
+      fieldsToUpdate.isActive = isActive;
+    if (categoryId !== undefined){
+      const category = await Category.findById(categoryId.id);
+      if(!category) {
+          res.status(400).json({
+            success: false,
+            errors: "La categoria no existe",
+          });
+          return;
+      }
+      fieldsToUpdate.categoryId = category.id;
+    }
+    if (quantity !== undefined)
+      fieldsToUpdate.quantity = quantity;
+    if (price !== undefined) fieldsToUpdate.price = price;
+    if (published !== undefined)
+      fieldsToUpdate.published = published;
+    if (includeTax !== undefined)
+      fieldsToUpdate.includeTax = includeTax;
+    if (cost !== undefined) fieldsToUpdate.cost = cost;
+    if (sku !== undefined) fieldsToUpdate.sku = sku;
+    if (color !== undefined) fieldsToUpdate.color = color;
+    if (size !== undefined) fieldsToUpdate.size = size;
+    if (tax !== undefined) fieldsToUpdate.tax = tax;
+    if (images !== undefined) fieldsToUpdate.images = images;
+    if (specs !== undefined) fieldsToUpdate.specs = specs;
+    if (free_shipping !== undefined) fieldsToUpdate.free_shipping = free_shipping;
+    if (warranty !== undefined) fieldsToUpdate.warranty = warranty;
+    if (discount !== undefined) fieldsToUpdate.discount = discount;
 
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
