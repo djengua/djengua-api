@@ -19,24 +19,42 @@ export const getProducts = async (
   res: Response
 ): Promise<void> => {
   try {
-    let filter: IProductFilter = {
-      // isActive: true,
-    };
+    // const page = parseInt(req.query.page as string) || 1;
+    // const limit = parseInt(req.query.limit as string) || 10;
+    // const skip = (page - 1) * limit;
 
-    filter.companyId = req.user!.activeCompany;
+    let filter: IProductFilter = {
+      companyId: req.user!.activeCompany,
+    };
 
     console.log(filter);
 
-    const products = await Product.find(filter)
-      .populate("createdBy", "name description isActive createdAt companyId ")
-      .populate("companyId", "name description")
-      .populate("categoryId", "name description")
-      .sort({ createdAt: -1 });
+    const [products, totalCount] = await Promise.all([
+      Product.find(filter)
+        .populate("createdBy", "name description isActive createdAt companyId ")
+        .populate("companyId", "name description")
+        .populate("categoryId", "name description")
+        .sort({ createdAt: -1 }),
+      // .skip(skip)
+      // .limit(limit),
+      Product.countDocuments(filter),
+    ]);
+
+    // const totalPages = Math.ceil(totalCount / limit);
+    // const hasNextPage = page < totalPages;
+    // const hasPrevPage = page > 1;
 
     res.status(200).json({
       success: true,
-      count: products.length,
       data: products,
+      total: totalCount,
+      // pagination: {
+      //   currentPage: page,
+      //   totalPages,
+      //   totalCount,
+      //   nextPage: hasNextPage ? page + 1 : null,
+      //   prevPage: hasPrevPage ? page - 1 : null,
+      // },
     });
   } catch (error) {
     if (error instanceof Error) {
@@ -109,7 +127,7 @@ export const newProduct = async (
   //   });
   //   return;
   // }
-  
+
   try {
     const { product } = req.body;
     const {
@@ -146,12 +164,12 @@ export const newProduct = async (
 
     const category = await Category.findById(categoryId.id);
 
-    if(!category) {
-        res.status(400).json({
-          success: false,
-          errors: "La categoria no existe",
-        });
-        return;
+    if (!category) {
+      res.status(400).json({
+        success: false,
+        errors: "La categoria no existe",
+      });
+      return;
     }
 
     // Crear nueva compañía
@@ -240,7 +258,6 @@ export const updateProduct = async (
   }
 
   try {
-
     const product = await Product.findById(req.params.id);
 
     if (!product) {
@@ -250,7 +267,6 @@ export const updateProduct = async (
       });
       return;
     }
-
 
     const { product: updProd } = req.body;
     const {
@@ -274,7 +290,6 @@ export const updateProduct = async (
       discount,
     } = updProd;
 
-
     if (req.body.images && Array.isArray(req.body.images)) {
       for (const image of req.body.images) {
         if (!image.filename || !image.url || !image.contentType) {
@@ -292,26 +307,22 @@ export const updateProduct = async (
     if (name !== undefined) fieldsToUpdate.name = name.trim();
     if (description !== undefined)
       fieldsToUpdate.description = description?.trim() ?? "";
-    if (isActive !== undefined)
-      fieldsToUpdate.isActive = isActive;
-    if (categoryId !== undefined){
+    if (isActive !== undefined) fieldsToUpdate.isActive = isActive;
+    if (categoryId !== undefined) {
       const category = await Category.findById(categoryId.id);
-      if(!category) {
-          res.status(400).json({
-            success: false,
-            errors: "La categoria no existe",
-          });
-          return;
+      if (!category) {
+        res.status(400).json({
+          success: false,
+          errors: "La categoria no existe",
+        });
+        return;
       }
       fieldsToUpdate.categoryId = category.id;
     }
-    if (quantity !== undefined)
-      fieldsToUpdate.quantity = quantity;
+    if (quantity !== undefined) fieldsToUpdate.quantity = quantity;
     if (price !== undefined) fieldsToUpdate.price = price;
-    if (published !== undefined)
-      fieldsToUpdate.published = published;
-    if (includeTax !== undefined)
-      fieldsToUpdate.includeTax = includeTax;
+    if (published !== undefined) fieldsToUpdate.published = published;
+    if (includeTax !== undefined) fieldsToUpdate.includeTax = includeTax;
     if (cost !== undefined) fieldsToUpdate.cost = cost;
     if (sku !== undefined) fieldsToUpdate.sku = sku;
     if (color !== undefined) fieldsToUpdate.color = color;
@@ -319,7 +330,8 @@ export const updateProduct = async (
     if (tax !== undefined) fieldsToUpdate.tax = tax;
     if (images !== undefined) fieldsToUpdate.images = images;
     if (specs !== undefined) fieldsToUpdate.specs = specs;
-    if (free_shipping !== undefined) fieldsToUpdate.free_shipping = free_shipping;
+    if (free_shipping !== undefined)
+      fieldsToUpdate.free_shipping = free_shipping;
     if (warranty !== undefined) fieldsToUpdate.warranty = warranty;
     if (discount !== undefined) fieldsToUpdate.discount = discount;
 
