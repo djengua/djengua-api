@@ -21,8 +21,6 @@ export const getProducts = async (
   const limit = parseInt(req.query.limit as string) || 10;
   const skip = (page - 1) * limit;
 
-  console.log(req.query);
-
   try {
     let filter: IProductFilter = {
       companyId: req.params.companyId,
@@ -42,7 +40,6 @@ export const getProducts = async (
     if (searchTerm) {
       filter.name = { $regex: searchTerm, $options: "i" };
     }
-    console.log(filter);
 
     const [products, totalCount] = await Promise.all([
       Product.find(filter)

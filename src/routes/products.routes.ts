@@ -9,6 +9,8 @@ import {
   getProductById,
   newProduct,
   updateProduct,
+  searchProducts,
+  searchByIds,
 } from "../controllers/products.controller";
 
 import { handleValidationErrors } from "../utils/validations";
@@ -47,6 +49,9 @@ router
   .route("/")
   .get(getProducts)
   .post(createProductValidation, handleValidationErrors, newProduct);
+
+router.route("/search").get(searchProducts);
+router.route("/by-ids").post(searchByIds);
 
 router
   .route("/:id")

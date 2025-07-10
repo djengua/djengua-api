@@ -16,6 +16,7 @@ import companiesRoutes from "./routes/companies.routes";
 import productsRoutes from "./routes/products.routes";
 import categoriesRoutes from "./routes/categories.routes";
 import ecommerceRoutes from "./routes/ecommerce.routes";
+import bundlesRoutes from "./routes/bundles.routes";
 
 const app: Application = express();
 
@@ -49,6 +50,7 @@ app.use("/api/companies", companiesRoutes);
 app.use("/api/products", productsRoutes);
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/e-commerce", ecommerceRoutes);
+app.use("/api/bundles", bundlesRoutes);
 
 // Ruta de inicio
 app.get("/", (req: Request, res: Response) => {

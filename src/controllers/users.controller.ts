@@ -190,12 +190,9 @@ export const updateUser = async (
     let activeCompany: mongoose.Types.ObjectId | string | null =
       user.activeCompany;
 
-    console.log(req.body.activeCompany);
     if (!req.body.activeCompany || req.body.activeCompany === "") {
       activeCompany = null;
-      console.log(1);
     } else {
-      console.log(2);
       const activeCompanyId = req.body.activeCompany;
 
       if (updatedCompanies.includes(activeCompanyId)) {

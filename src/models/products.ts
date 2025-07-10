@@ -1,22 +1,24 @@
 // src/models/User.ts
 import mongoose, { Document, Schema } from "mongoose";
+import { IImages, ImageSchema } from "./images";
+import { ISpec, SpecSchema } from "./specs";
 
-export interface IImages {
-  filename: string;
-  url: string;
-  contentType: string;
-  uploadDate: string;
-}
+// export interface IImages {
+//   filename: string;
+//   url: string;
+//   contentType: string;
+//   uploadDate: string;
+// }
 
 export interface IColors {
   color: string;
   name: string;
 }
 
-export interface ISpec {
-  name: string;
-  value: string;
-}
+// export interface ISpec {
+//   name: string;
+//   value: string;
+// }
 
 export interface IProduct extends Document {
   name: string;
@@ -43,6 +45,7 @@ export interface IProduct extends Document {
   free_shipping?: boolean;
   warranty?: boolean;
   discount?: number;
+  unlimited: boolean;
 }
 
 const ColorSchema: Schema = new Schema(
@@ -61,56 +64,56 @@ const ColorSchema: Schema = new Schema(
   { _id: true }
 );
 
-const SpecSchema: Schema = new Schema(
-  {
-    name: {
-      type: String,
-      required: [true, "El nombre de la especificacion es requerido"],
-      trim: true,
-    },
-    value: {
-      type: String,
-      required: [true, "El valor de la especificacion es requerido"],
-      trim: true,
-    },
-  },
-  { _id: true }
-);
+// const SpecSchema: Schema = new Schema(
+//   {
+//     name: {
+//       type: String,
+//       required: [true, "El nombre de la especificacion es requerido"],
+//       trim: true,
+//     },
+//     value: {
+//       type: String,
+//       required: [true, "El valor de la especificacion es requerido"],
+//       trim: true,
+//     },
+//   },
+//   { _id: true }
+// );
 
-const ImageSchema: Schema = new Schema(
-  {
-    filename: {
-      type: String,
-      required: [true, "El nombre del archivo es requerido"],
-      trim: true,
-    },
-    url: {
-      type: String,
-      required: [true, "La URL de la imagen es requerida"],
-      trim: true,
-    },
-    contentType: {
-      type: String,
-      required: [true, "El tipo de contenido es requerido"],
-      enum: {
-        values: [
-          "image/jpeg",
-          "image/jpg",
-          "image/png",
-          "image/webp",
-          "image/gif",
-        ],
-        message:
-          "Tipo de imagen no válido. Solo se permiten: jpeg, jpg, png, webp, gif",
-      },
-    },
-    uploadDate: {
-      type: Date,
-      default: Date.now,
-    },
-  },
-  { _id: true }
-);
+// const ImageSchema: Schema = new Schema(
+//   {
+//     filename: {
+//       type: String,
+//       required: [true, "El nombre del archivo es requerido"],
+//       trim: true,
+//     },
+//     url: {
+//       type: String,
+//       required: [true, "La URL de la imagen es requerida"],
+//       trim: true,
+//     },
+//     contentType: {
+//       type: String,
+//       required: [true, "El tipo de contenido es requerido"],
+//       enum: {
+//         values: [
+//           "image/jpeg",
+//           "image/jpg",
+//           "image/png",
+//           "image/webp",
+//           "image/gif",
+//         ],
+//         message:
+//           "Tipo de imagen no válido. Solo se permiten: jpeg, jpg, png, webp, gif",
+//       },
+//     },
+//     uploadDate: {
+//       type: Date,
+//       default: Date.now,
+//     },
+//   },
+//   { _id: true }
+// );
 
 const ProductSchema: Schema = new Schema(
   {
@@ -251,6 +254,10 @@ const ProductSchema: Schema = new Schema(
       default: true,
     },
     warranty: {
+      type: Boolean,
+      default: false,
+    },
+    unlimited: {
       type: Boolean,
       default: false,
     },

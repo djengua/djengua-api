@@ -9,6 +9,9 @@ import Category from "../models/category";
 interface IProductFilter {
   isActive?: boolean;
   companyId?: mongoose.Types.ObjectId | string;
+  $or?: Array<{ [key: string]: any }>;
+  name?: { $regex: string; $options: string };
+  sku?: { $regex: string; $options: string };
 }
 
 // @desc    Obtener todas los products
@@ -19,15 +22,28 @@ export const getProducts = async (
   res: Response
 ): Promise<void> => {
   try {
+    const searchQuery = req.query.q as string;
     // const page = parseInt(req.query.page as string) || 1;
     // const limit = parseInt(req.query.limit as string) || 10;
     // const skip = (page - 1) * limit;
-
     let filter: IProductFilter = {
       companyId: req.user!.activeCompany,
     };
 
-    console.log(filter);
+    if (searchQuery && searchQuery.trim()) {
+      const searchRegex = { $regex: searchQuery.trim(), $options: "i" };
+
+      // Búsqueda en múltiples campos (name, sku, description)
+      filter.$or = [
+        { name: searchRegex },
+        { sku: searchRegex },
+        { description: searchRegex },
+      ];
+
+      delete filter.name;
+    }
+
+    // console.log(filter);
 
     const [products, totalCount] = await Promise.all([
       Product.find(filter)
@@ -55,6 +71,103 @@ export const getProducts = async (
       //   nextPage: hasNextPage ? page + 1 : null,
       //   prevPage: hasPrevPage ? page - 1 : null,
       // },
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "Error al obtener los productos",
+      });
+    }
+  }
+};
+
+// @desc    Obtener productos por ID Bundles
+// @route   GET /api/products/search
+// @access  Private/Admin
+export const searchProducts = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const searchQuery = req.query.q as string;
+    let filter: IProductFilter = {
+      companyId: req.user!.activeCompany,
+      isActive: true,
+    };
+
+    if (searchQuery && searchQuery.trim()) {
+      const searchRegex = { $regex: searchQuery.trim(), $options: "i" };
+
+      // Búsqueda en múltiples campos (name, sku, description)
+      filter.$or = [
+        { name: searchRegex },
+        { sku: searchRegex },
+        { description: searchRegex },
+      ];
+
+      delete filter.name;
+    }
+
+    const [products, totalCount] = await Promise.all([
+      Product.find(filter)
+        // .select("name sku categoryId price quantity")
+        .populate("createdBy", "name description isActive createdAt companyId ")
+        .populate("companyId", "name description")
+        .populate("categoryId", "name description")
+        .sort({ createdAt: -1 }),
+
+      Product.countDocuments(filter),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: products,
+      total: totalCount,
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "Error al obtener los productos",
+      });
+    }
+  }
+};
+
+// @desc    Obtener productos por ID Bundles
+// @route   GET /api/products/by-ids
+// @access  Private/Admin
+export const searchByIds = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const filter = { _id: { $in: req.body.ids } };
+
+    const [products, totalCount] = await Promise.all([
+      Product.find(filter)
+        .select("name description companyId categoryId sku isActive")
+        .populate("companyId", "name description")
+        .populate("categoryId", "name description")
+        .sort({ createdAt: -1 }),
+      Product.countDocuments(filter),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: products,
+      total: totalCount,
     });
   } catch (error) {
     if (error instanceof Error) {
@@ -148,6 +261,7 @@ export const newProduct = async (
       free_shipping,
       warranty,
       discount,
+      unlimited,
     } = product;
 
     if (images && Array.isArray(images)) {
@@ -193,6 +307,7 @@ export const newProduct = async (
       free_shipping: free_shipping ?? false,
       warranty: warranty ?? false,
       discount: discount ?? 0,
+      unlimited: unlimited ?? false,
     });
 
     await newProduct.populate(
@@ -288,6 +403,7 @@ export const updateProduct = async (
       free_shipping,
       warranty,
       discount,
+      unlimited,
     } = updProd;
 
     if (req.body.images && Array.isArray(req.body.images)) {
@@ -334,6 +450,7 @@ export const updateProduct = async (
       fieldsToUpdate.free_shipping = free_shipping;
     if (warranty !== undefined) fieldsToUpdate.warranty = warranty;
     if (discount !== undefined) fieldsToUpdate.discount = discount;
+    if (unlimited !== undefined) fieldsToUpdate.unlimited = unlimited;
 
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
