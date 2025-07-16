@@ -41,13 +41,11 @@ router
         .isEmail()
         .withMessage("Email incorrecto")
         .toLowerCase(),
-      body("name")
-        .notEmpty()
-        .withMessage("El nombre es obligatorio")
-        .withMessage("Email incorrecto"),
+      body("name").notEmpty().withMessage("El nombre es obligatorio"),
       body("lastName").optional().trim(),
       body("role").optional(),
-      body("password").optional(),
+      body("password").notEmpty(),
+      body("phone").notEmpty(),
       body("companies").optional(),
     ],
     newUser

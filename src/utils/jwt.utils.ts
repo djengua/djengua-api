@@ -1,5 +1,5 @@
 // src/utils/jwt.utils.ts
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 
 // Definir interfaces específicas para evitar problemas de tipado
 interface JwtPayload {
@@ -12,23 +12,28 @@ interface JwtPayload {
  * @param id ID del usuario
  * @returns Token JWT firmado
  */
-export const generateToken = (id: string, role: string, email: string): string => {
+export const generateToken = (
+  id: string,
+  role: string,
+  email: string,
+  rememberMe: boolean
+): string => {
   // Verificar que existe el secreto JWT
   const secret = process.env.JWT_SECRET;
   if (!secret) {
-    throw new Error('JWT_SECRET no está definido en las variables de entorno');
+    throw new Error("JWT_SECRET no está definido en las variables de entorno");
   }
 
   // Configurar tiempo de expiración
-  const expiresIn = process.env.JWT_EXPIRE || '30d';
-  
+  const expiresIn = rememberMe ? "30d" : "24h";
+
   try {
     // Utilizar cast explícito para el secreto
     // @ts-ignore - Ignorar errores de tipo para esta línea específica
     return jwt.sign({ id, role, email }, secret, { expiresIn });
   } catch (error) {
-    console.error('Error al generar JWT:', error);
-    throw new Error('No se pudo generar el token JWT');
+    console.error("Error al generar JWT:", error);
+    throw new Error("No se pudo generar el token JWT");
   }
 };
 
@@ -41,15 +46,17 @@ export const verifyToken = (token: string): JwtPayload | null => {
   try {
     const secret = process.env.JWT_SECRET;
     if (!secret) {
-      throw new Error('JWT_SECRET no está definido en las variables de entorno');
+      throw new Error(
+        "JWT_SECRET no está definido en las variables de entorno"
+      );
     }
-    
+
     // Utilizar cast explícito para el secreto
     // @ts-ignore - Ignorar errores de tipo para esta línea específica
     const decoded = jwt.verify(token, secret) as JwtPayload;
     return decoded;
   } catch (error) {
-    console.error('Error al verificar JWT:', error);
+    console.error("Error al verificar JWT:", error);
     return null;
   }
 };

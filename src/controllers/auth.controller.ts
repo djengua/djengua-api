@@ -13,7 +13,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  const { name, lastName, email, password } = req.body;
+  const { name, lastName, email, password, phone } = req.body;
 
   try {
     // Verificar si el usuario ya existe
@@ -33,10 +33,12 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       lastName,
       email,
       password,
+      phone,
+      role: "admin",
     });
 
     // Crear token
-    const token = user.getSignedJwtToken();
+    const token = user.getSignedJwtToken(false);
 
     res.status(201).json({
       success: true,
@@ -67,7 +69,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  const { email, password } = req.body;
+  const { email, password, rememberMe } = req.body;
 
   try {
     // Verificar por email y seleccionar la contraseña
@@ -112,7 +114,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     // Crear token
-    const token = user.getSignedJwtToken();
+    const token = user.getSignedJwtToken(rememberMe);
 
     res.status(200).json({
       success: true,
@@ -132,4 +134,3 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
   }
 };
-

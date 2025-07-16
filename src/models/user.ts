@@ -15,7 +15,7 @@ export interface IUser extends Document {
   activeCompany: mongoose.Types.ObjectId;
   avatar: string;
   matchPassword(enteredPassword: string): Promise<boolean>;
-  getSignedJwtToken(): string;
+  getSignedJwtToken(rememberMe: boolean): string;
   createdBy?: mongoose.Types.ObjectId;
   companies: mongoose.Types.ObjectId[];
   phone: string;
@@ -119,11 +119,14 @@ UserSchema.methods.matchPassword = async function (
 };
 
 // Utilizar la función auxiliar para generar el token
-UserSchema.methods.getSignedJwtToken = function (): string {
+UserSchema.methods.getSignedJwtToken = function (rememberMe: boolean): string {
+  console.log("sign");
+  console.log(rememberMe);
   return generateToken(
     this.id.toString(),
     this.role.toString(),
-    this.email.toString()
+    this.email.toString(),
+    rememberMe
   );
 };
 
