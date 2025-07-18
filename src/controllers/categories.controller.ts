@@ -24,14 +24,16 @@ export const getCategories = async (
       isActive: true,
     };
 
-    if (req.user!.role === "admin") {
-      filter.userId = req.user!.id;
-    } else if (req.user!.role === "user") {
-      // Es usuario creado por admin
-      if (!req.user?.createdBy) {
-        filter.userId = req.user?.createdBy;
-      } else {
-        throw new Error("Categorias: Algo ocurrio consulte con el administrador.");
+    if (req.user!.role !== "admin") {
+      if (req.user!.role === "user") {
+        // Es usuario creado por admin
+        if (!req.user?.createdBy) {
+          filter.userId = req.user?.createdBy;
+        } else {
+          throw new Error(
+            "Categorias: Algo ocurrio consulte con el administrador."
+          );
+        }
       }
     }
 

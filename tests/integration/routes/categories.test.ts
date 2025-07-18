@@ -57,14 +57,22 @@ describe("Categories Routes", () => {
   });
 
   describe("GET /api/categories", () => {
-    beforeEach(async () => {
-      await Category.create([
-        { name: "Active Category", description: "Active", isActive: true },
-        { name: "Inactive Category", description: "Inactive", isActive: false },
-      ]);
-    });
-
     it("should return all categories for admin", async () => {
+      await Category.create([
+        {
+          name: "Active Category",
+          description: "Active",
+          isActive: true,
+          userId: adminUser._id,
+        },
+        {
+          name: "Inactive Category",
+          description: "Inactive",
+          isActive: false,
+          userId: adminUser._id,
+        },
+      ]);
+
       const response = await request(app)
         .get("/api/categories")
         .set("Authorization", `Bearer ${adminToken}`)
@@ -76,6 +84,21 @@ describe("Categories Routes", () => {
     });
 
     it("should return only active categories for regular user", async () => {
+      await Category.create([
+        {
+          name: "Active Category",
+          description: "Active",
+          isActive: true,
+          userId: regularUser._id,
+        },
+        {
+          name: "Inactive Category",
+          description: "Inactive",
+          isActive: false,
+          userId: regularUser._id,
+        },
+      ]);
+
       const response = await request(app)
         .get("/api/categories")
         .set("Authorization", `Bearer ${authToken}`)
@@ -131,7 +154,7 @@ describe("Categories Routes", () => {
     });
 
     it("should return 409 for duplicate category name", async () => {
-      await Category.create(validCategoryData);
+      await Category.create({ ...validCategoryData, userId: regularUser._id });
 
       const response = await request(app)
         .post("/api/categories")

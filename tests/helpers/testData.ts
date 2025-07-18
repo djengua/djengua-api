@@ -19,7 +19,7 @@ export const createTestUser = async (userData: any = {}) => {
 
 export const generateTestToken = (userId: string, role: string = 'user', email: string = 'test@example.com'): string => {
   // Usar la misma función que usa tu aplicación
-  return generateToken(userId, role, email);
+  return generateToken(userId, role, email, false);
 };
 
 export const createTestCategory = async (categoryData: any = {}) => {

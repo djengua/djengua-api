@@ -1,7 +1,10 @@
 import Category, { ICategory } from '../../../src/models/category';
 import { connectTestDB, closeTestDB, clearTestDB } from '../../helpers/database';
+import { createTestUser } from '../../helpers/testData';
 
 describe('Category Model', () => {
+  let testUser: any;
+
   beforeAll(async () => {
     await connectTestDB();
   });
@@ -12,13 +15,15 @@ describe('Category Model', () => {
 
   beforeEach(async () => {
     await clearTestDB();
+    testUser = await createTestUser();
   });
 
   describe('Validation', () => {
     it('should create a valid category', async () => {
       const categoryData = {
         name: 'Test Category',
-        description: 'Test description'
+        description: 'Test description',
+        userId: testUser._id,
       };
 
       const category = new Category(categoryData);
@@ -32,7 +37,8 @@ describe('Category Model', () => {
 
     it('should fail validation without name', async () => {
       const category = new Category({
-        description: 'Test description'
+        description: 'Test description',
+        userId: testUser._id,
       });
 
       await expect(category.save()).rejects.toThrow('Por favor agregue un nombre');
@@ -41,7 +47,8 @@ describe('Category Model', () => {
     it('should fail validation with name too long', async () => {
       const category = new Category({
         name: 'a'.repeat(51),
-        description: 'Test description'
+        description: 'Test description',
+        userId: testUser._id,
       });
 
       await expect(category.save()).rejects.toThrow('El nombre no puede tener más de 50 caracteres');
@@ -52,7 +59,8 @@ describe('Category Model', () => {
     it('should transform _id to id in JSON', async () => {
       const category = await Category.create({
         name: 'Test Category',
-        description: 'Test description'
+        description: 'Test description',
+        userId: testUser._id,
       });
 
       const json = category.toJSON();
